@@ -69,7 +69,7 @@ function extractLanguages(repos: GHRepo[]): string[] {
   const langs = repos
     .map((r) => r.language)
     .filter((l): l is string => !!l);
-  return [...new Set(langs)];
+  return Array.from(new Set(langs));
 }
 
 function toCandidate(user: GHUser, repos: GHRepo[]): Candidate {
