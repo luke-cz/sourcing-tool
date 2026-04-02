@@ -1,5 +1,7 @@
 export type Source = "github" | "linkedin" | "hackernews" | "stackoverflow";
 
+export type TierLevel = 1 | 2 | null;
+
 export interface Repo {
   name: string;
   description: string | null;
@@ -8,25 +10,30 @@ export interface Repo {
   url: string;
 }
 
+export interface ParsedJD {
+  mustHaves: string[];
+  niceToHaves: string[];
+  searchQuery: string; // auto-generated query from must-haves
+}
+
 export interface Candidate {
-  id: string; // unique: "{source}:{username or identifier}"
+  id: string;
   source: Source;
   name: string | null;
   username: string;
   avatarUrl: string | null;
   profileUrl: string;
-  headline: string | null; // job title / bio first line
+  headline: string | null;
   bio: string | null;
   location: string | null;
   company: string | null;
-  openToWork: boolean | null; // null = unknown
+  openToWork: boolean | null;
   languages: string[];
   topRepos: Repo[];
   followers: number | null;
-  // HN-specific: raw comment text from "Who wants to be hired"
   rawText: string | null;
-  // filled in async by /api/summarize
   summary: string | null;
+  tier: TierLevel;
 }
 
 export interface SearchParams {
@@ -34,6 +41,9 @@ export interface SearchParams {
   sources: Source[];
   location?: string;
   language?: string;
+  background?: string;
+  mustHaves?: string[];
+  niceToHaves?: string[];
 }
 
 export interface SearchResponse {

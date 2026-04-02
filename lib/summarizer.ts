@@ -35,16 +35,28 @@ function buildPrompt(candidate: Candidate): string {
   return lines.join("\n");
 }
 
-export async function generateSummary(candidate: Candidate): Promise<string> {
+export async function generateSummary(
+  candidate: Candidate,
+  context?: { mustHaves?: string[]; background?: string }
+): Promise<string> {
   const profileData = buildPrompt(candidate);
+
+  const mustHavesLine = context?.mustHaves?.length
+    ? `\nKey requirements to assess against: ${context.mustHaves.join(", ")}`
+    : "";
+  const backgroundLine = context?.background
+    ? `\nRole context: ${context.background}`
+    : "";
 
   const message = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 150,
+    max_tokens: 180,
     messages: [
       {
         role: "user",
-        content: `You are a recruiter's assistant. Given the following public profile data, write a 2-3 sentence professional summary. Focus on: (1) what they build / main technical focus, (2) experience signals, (3) any notable signals like open to work or location. Be factual and concise. Do not invent information not present in the data.
+        content: `You are a recruiter's assistant.${backgroundLine}${mustHavesLine}
+
+Given the following public profile data, write a 2-3 sentence professional summary. Focus on: (1) what they build / main technical focus, (2) experience signals, (3) how well they match the key requirements if provided. Be factual and concise. Do not invent information not present in the data.
 
 Profile data:
 ${profileData}`,

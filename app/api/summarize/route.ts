@@ -7,19 +7,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "ANTHROPIC_API_KEY not set" }, { status: 503 });
   }
 
-  let candidate: Candidate;
-  try {
-    candidate = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
+  const body = await req.json();
+  const { candidate, mustHaves, background } = body as {
+    candidate: Candidate;
+    mustHaves?: string[];
+    background?: string;
+  };
 
   if (!candidate?.id) {
-    return NextResponse.json({ error: "candidate.id is required" }, { status: 400 });
+    return NextResponse.json({ error: "candidate is required" }, { status: 400 });
   }
 
   try {
-    const summary = await generateSummary(candidate);
+    const summary = await generateSummary(candidate, { mustHaves, background });
     return NextResponse.json({ summary });
   } catch (err) {
     console.error("[summarize] error:", err);

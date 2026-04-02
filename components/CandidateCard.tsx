@@ -7,9 +7,16 @@ import { SourceBadge } from "@/components/SourceBadge";
 
 interface Props {
   candidate: Candidate;
+  mustHaves?: string[];
+  background?: string;
 }
 
-export function CandidateCard({ candidate }: Props) {
+const TIER_CONFIG = {
+  1: { label: "Tier 1", className: "bg-amber-50 text-amber-800 border-amber-300", title: "Elite background (FAANG, top trading firm, or leading AI/crypto company)" },
+  2: { label: "Tier 2", className: "bg-slate-50 text-slate-700 border-slate-300", title: "Strong background (established tech or well-known startup)" },
+};
+
+export function CandidateCard({ candidate, mustHaves, background }: Props) {
   const [summary, setSummary] = useState<string | null>(candidate.summary);
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [summaryError, setSummaryError] = useState(false);
@@ -21,7 +28,7 @@ export function CandidateCard({ candidate }: Props) {
     fetch("/api/summarize", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(candidate),
+      body: JSON.stringify({ candidate, mustHaves, background }),
     })
       .then((r) => r.json())
       .then((data) => {
@@ -34,6 +41,7 @@ export function CandidateCard({ candidate }: Props) {
   }, [candidate.id]);
 
   const displayName = candidate.name ?? candidate.username;
+  const tierConfig = candidate.tier ? TIER_CONFIG[candidate.tier] : null;
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-5 flex flex-col gap-3 hover:shadow-md transition-shadow">
@@ -62,6 +70,14 @@ export function CandidateCard({ candidate }: Props) {
             {candidate.openToWork === true && (
               <span className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5 font-medium">
                 Open to work
+              </span>
+            )}
+            {tierConfig && (
+              <span
+                className={`text-xs border rounded-full px-2 py-0.5 font-semibold ${tierConfig.className}`}
+                title={tierConfig.title}
+              >
+                {tierConfig.label}
               </span>
             )}
           </div>
@@ -96,7 +112,7 @@ export function CandidateCard({ candidate }: Props) {
         )}
       </div>
 
-      {/* Headline / bio */}
+      {/* Headline */}
       {candidate.headline && (
         <p className="text-sm text-gray-700 leading-snug line-clamp-2">{candidate.headline}</p>
       )}
@@ -161,7 +177,7 @@ export function CandidateCard({ candidate }: Props) {
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-1">
+      <div className="pt-1">
         <a
           href={candidate.profileUrl}
           target="_blank"

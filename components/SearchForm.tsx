@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, FormEvent } from "react";
-import type { SearchParams, Source } from "@/lib/types";
+import type { ParsedJD, SearchParams, Source } from "@/lib/types";
 
 const ALL_SOURCES: { id: Source; label: string }[] = [
   { id: "github", label: "GitHub" },
@@ -11,7 +11,7 @@ const ALL_SOURCES: { id: Source; label: string }[] = [
 ];
 
 interface Props {
-  onSearch: (params: SearchParams) => void;
+  onSearch: (params: SearchParams & { background?: string }, parsedJD?: ParsedJD) => void;
   loading: boolean;
 }
 
@@ -19,15 +19,21 @@ export function SearchForm({ onSearch, loading }: Props) {
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("");
   const [language, setLanguage] = useState("");
+  const [background, setBackground] = useState("");
+  const [jobSpec, setJobSpec] = useState("");
+  const [showJobSpec, setShowJobSpec] = useState(false);
   const [sources, setSources] = useState<Set<Source>>(
     new Set(["github", "hackernews", "stackoverflow"])
   );
+  const [parsedJD, setParsedJD] = useState<ParsedJD | null>(null);
+  const [parsingJD, setParsingJD] = useState(false);
+  const [parseError, setParseError] = useState<string | null>(null);
 
   function toggleSource(source: Source) {
     setSources((prev) => {
       const next = new Set(prev);
       if (next.has(source)) {
-        if (next.size === 1) return prev; // keep at least one
+        if (next.size === 1) return prev;
         next.delete(source);
       } else {
         next.add(source);
@@ -36,32 +42,144 @@ export function SearchForm({ onSearch, loading }: Props) {
     });
   }
 
+  async function handleParseJD() {
+    if (!jobSpec.trim()) return;
+    setParsingJD(true);
+    setParseError(null);
+    setParsedJD(null);
+    try {
+      const res = await fetch("/api/parse-jd", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jobSpec, background }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to parse");
+      setParsedJD(data as ParsedJD);
+      // Auto-fill query from parsed JD
+      if (data.searchQuery) setQuery(data.searchQuery);
+    } catch (err) {
+      setParseError(err instanceof Error ? err.message : "Failed to parse job spec");
+    } finally {
+      setParsingJD(false);
+    }
+  }
+
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!query.trim()) return;
-    onSearch({
-      query: query.trim(),
-      sources: [...sources],
-      location: location.trim() || undefined,
-      language: language.trim() || undefined,
-    });
+    const effectiveQuery = query.trim() || parsedJD?.searchQuery || "";
+    if (!effectiveQuery) return;
+
+    onSearch(
+      {
+        query: effectiveQuery,
+        sources: [...sources],
+        location: location.trim() || undefined,
+        language: language.trim() || undefined,
+        background: background.trim() || undefined,
+        mustHaves: parsedJD?.mustHaves,
+        niceToHaves: parsedJD?.niceToHaves,
+      },
+      parsedJD ?? undefined
+    );
   }
+
+  const canSearch = (query.trim() || parsedJD?.searchQuery) && !loading;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Background row */}
+      <div className="flex gap-2 items-center">
+        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">
+          Background
+        </label>
+        <input
+          type="text"
+          value={background}
+          onChange={(e) => setBackground(e.target.value)}
+          placeholder='e.g. "High Frequency Trading", "AI startup", "crypto exchange"'
+          className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          disabled={loading}
+        />
+      </div>
+
+      {/* Job spec toggle */}
+      <div>
+        <button
+          type="button"
+          onClick={() => setShowJobSpec((v) => !v)}
+          className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+        >
+          <span>{showJobSpec ? "▾" : "▸"}</span>
+          {showJobSpec ? "Hide job spec" : "Paste job spec"}
+        </button>
+
+        {showJobSpec && (
+          <div className="mt-2 space-y-2">
+            <textarea
+              value={jobSpec}
+              onChange={(e) => setJobSpec(e.target.value)}
+              placeholder="Paste the full job description here…"
+              rows={6}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none font-mono"
+              disabled={loading || parsingJD}
+            />
+            <button
+              type="button"
+              onClick={handleParseJD}
+              disabled={!jobSpec.trim() || parsingJD || loading}
+              className="px-4 py-1.5 bg-gray-800 text-white text-sm font-medium rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {parsingJD ? "Analyzing…" : "Analyze requirements"}
+            </button>
+            {parseError && (
+              <p className="text-xs text-red-600">{parseError}</p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Parsed JD chips */}
+      {parsedJD && (
+        <div className="space-y-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
+          <div>
+            <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Must haves</span>
+            <div className="flex flex-wrap gap-1.5 mt-1">
+              {parsedJD.mustHaves.map((req) => (
+                <span key={req} className="text-xs bg-blue-100 text-blue-800 border border-blue-200 rounded-full px-2.5 py-0.5 font-medium">
+                  {req}
+                </span>
+              ))}
+            </div>
+          </div>
+          {parsedJD.niceToHaves.length > 0 && (
+            <div>
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Nice to have</span>
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {parsedJD.niceToHaves.map((req) => (
+                  <span key={req} className="text-xs bg-gray-100 text-gray-600 border border-gray-200 rounded-full px-2.5 py-0.5">
+                    {req}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Main search row */}
       <div className="flex gap-2">
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder='e.g. "React developer" or "machine learning engineer"'
+          placeholder={parsedJD ? parsedJD.searchQuery : 'e.g. "React developer" or "machine learning engineer"'}
           className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           disabled={loading}
         />
         <button
           type="submit"
-          disabled={loading || !query.trim()}
+          disabled={!canSearch}
           className="px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {loading ? (
@@ -78,7 +196,7 @@ export function SearchForm({ onSearch, loading }: Props) {
         </button>
       </div>
 
-      {/* Filters row */}
+      {/* Sources + filters */}
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Sources:</span>

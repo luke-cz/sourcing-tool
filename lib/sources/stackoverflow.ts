@@ -1,4 +1,5 @@
 import type { Candidate, SearchParams } from "@/lib/types";
+import { detectTier } from "@/lib/tiers";
 
 const BASE = "https://api.stackexchange.com/2.3";
 
@@ -38,24 +39,27 @@ export async function searchStackOverflow(params: SearchParams): Promise<Candida
 
   const data = (await res.json()) as SOResponse;
 
-  return data.items.map((user): Candidate => ({
-    id: `stackoverflow:${user.user_id}`,
-    source: "stackoverflow",
-    name: user.display_name,
-    username: user.display_name,
-    avatarUrl: user.profile_image ?? null,
-    profileUrl: user.link,
-    headline: `Reputation: ${user.reputation.toLocaleString()}`,
-    bio: user.about_me ? stripHtml(user.about_me).slice(0, 300) : null,
-    location: user.location ?? null,
-    company: null,
-    openToWork: null,
-    languages: [],
-    topRepos: [],
-    followers: null,
-    rawText: null,
-    summary: null,
-  }));
+  return data.items.map((user): Candidate => {
+    const base: Omit<Candidate, "tier"> = {
+      id: `stackoverflow:${user.user_id}`,
+      source: "stackoverflow",
+      name: user.display_name,
+      username: user.display_name,
+      avatarUrl: user.profile_image ?? null,
+      profileUrl: user.link,
+      headline: `Reputation: ${user.reputation.toLocaleString()}`,
+      bio: user.about_me ? stripHtml(user.about_me).slice(0, 300) : null,
+      location: user.location ?? null,
+      company: null,
+      openToWork: null,
+      languages: [],
+      topRepos: [],
+      followers: null,
+      rawText: null,
+      summary: null,
+    };
+    return { ...base, tier: detectTier(base) };
+  });
 }
 
 function stripHtml(html: string): string {

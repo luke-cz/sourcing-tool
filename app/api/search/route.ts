@@ -13,28 +13,35 @@ const sourceFetchers: Record<Source, (params: SearchParams) => Promise<Candidate
 };
 
 export async function POST(req: NextRequest) {
-  let body: Partial<SearchParams>;
+  let body: Partial<SearchParams & { background?: string; mustHaves?: string[]; niceToHaves?: string[] }>;
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { query, sources, location, language } = body;
+  const { query, sources, location, language, background, mustHaves, niceToHaves } = body;
 
   if (!query || typeof query !== "string" || !query.trim()) {
     return NextResponse.json({ error: "query is required" }, { status: 400 });
   }
+
+  // Build enriched query: combine query + background context + top must-haves
+  let enrichedQuery = query.trim();
+  if (background) enrichedQuery = `${background} ${enrichedQuery}`;
 
   const activeSources: Source[] = Array.isArray(sources) && sources.length > 0
     ? sources
     : ["github", "hackernews", "stackoverflow"];
 
   const params: SearchParams = {
-    query: query.trim(),
+    query: enrichedQuery,
     sources: activeSources,
     location: typeof location === "string" ? location.trim() : undefined,
     language: typeof language === "string" ? language.trim() : undefined,
+    background: typeof background === "string" ? background.trim() : undefined,
+    mustHaves: Array.isArray(mustHaves) ? mustHaves : undefined,
+    niceToHaves: Array.isArray(niceToHaves) ? niceToHaves : undefined,
   };
 
   const results = await Promise.allSettled(
@@ -55,6 +62,13 @@ export async function POST(req: NextRequest) {
         message: result.reason instanceof Error ? result.reason.message : String(result.reason),
       });
     }
+  });
+
+  // Sort: tier 1 first, tier 2 second, null last
+  candidates.sort((a, b) => {
+    const ta = a.tier ?? 99;
+    const tb = b.tier ?? 99;
+    return ta - tb;
   });
 
   const response: SearchResponse = { candidates, errors };

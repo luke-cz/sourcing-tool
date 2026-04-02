@@ -1,4 +1,5 @@
 import type { Candidate, SearchParams } from "@/lib/types";
+import { detectTier } from "@/lib/tiers";
 
 const ALGOLIA = "https://hn.algolia.com/api/v1";
 
@@ -69,7 +70,7 @@ function commentToCandidate(hit: AlgoliaHit, query: string): Candidate | null {
   const relevant = terms.some((t) => t.length > 2 && lowerText.includes(t));
   if (!relevant) return null;
 
-  return {
+  const candidate: Omit<Candidate, "tier"> = {
     id: `hackernews:${hit.objectID}`,
     source: "hackernews",
     name: null,
@@ -87,6 +88,7 @@ function commentToCandidate(hit: AlgoliaHit, query: string): Candidate | null {
     rawText: text,
     summary: null,
   };
+  return { ...candidate, tier: detectTier(candidate) };
 }
 
 export async function searchHackerNews(params: SearchParams): Promise<Candidate[]> {

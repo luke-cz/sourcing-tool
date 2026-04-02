@@ -1,4 +1,5 @@
 import type { Candidate, Repo, SearchParams } from "@/lib/types";
+import { detectTier } from "@/lib/tiers";
 
 const BASE = "https://api.github.com";
 
@@ -80,7 +81,7 @@ function toCandidate(user: GHUser, repos: GHRepo[]): Candidate {
     url: r.html_url,
   }));
 
-  return {
+  const candidate: Omit<Candidate, "tier"> = {
     id: `github:${user.login}`,
     source: "github",
     name: user.name,
@@ -98,6 +99,7 @@ function toCandidate(user: GHUser, repos: GHRepo[]): Candidate {
     rawText: null,
     summary: null,
   };
+  return { ...candidate, tier: detectTier(candidate) };
 }
 
 export async function searchGitHub(params: SearchParams): Promise<Candidate[]> {

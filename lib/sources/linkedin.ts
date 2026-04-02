@@ -1,4 +1,5 @@
 import type { Candidate, SearchParams } from "@/lib/types";
+import { detectTier } from "@/lib/tiers";
 
 // LinkedIn data is sourced via Google Custom Search Engine restricted to linkedin.com/in/*
 // Setup: https://programmablesearchengine.google.com/ → add site:linkedin.com/in
@@ -65,7 +66,7 @@ export async function searchLinkedIn(params: SearchParams): Promise<Candidate[]>
       const username = extractUsername(item.link);
       const ogImage = item.pagemap?.metatags?.[0]?.["og:image"] ?? null;
 
-      return {
+      const base: Omit<Candidate, "tier"> = {
         id: `linkedin:${username}`,
         source: "linkedin",
         name,
@@ -83,5 +84,6 @@ export async function searchLinkedIn(params: SearchParams): Promise<Candidate[]>
         rawText: null,
         summary: null,
       };
+      return { ...base, tier: detectTier(base) };
     });
 }

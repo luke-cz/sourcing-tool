@@ -3,17 +3,30 @@
 import { useState } from "react";
 import { SearchForm } from "@/components/SearchForm";
 import { ResultsGrid } from "@/components/ResultsGrid";
-import type { SearchParams, SearchResponse } from "@/lib/types";
+import type { ParsedJD, SearchParams, SearchResponse } from "@/lib/types";
+
+interface SearchContext {
+  mustHaves?: string[];
+  background?: string;
+}
 
 export default function Home() {
   const [response, setResponse] = useState<SearchResponse | null>(null);
+  const [context, setContext] = useState<SearchContext>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleSearch(params: SearchParams) {
+  async function handleSearch(
+    params: SearchParams & { background?: string },
+    parsedJD?: ParsedJD
+  ) {
     setLoading(true);
     setError(null);
     setResponse(null);
+    setContext({
+      mustHaves: parsedJD?.mustHaves,
+      background: params.background,
+    });
 
     try {
       const res = await fetch("/api/search", {
@@ -81,15 +94,21 @@ export default function Home() {
       )}
 
       {/* Results */}
-      {!loading && response && <ResultsGrid response={response} />}
+      {!loading && response && (
+        <ResultsGrid
+          response={response}
+          mustHaves={context.mustHaves}
+          background={context.background}
+        />
+      )}
 
-      {/* Empty state before first search */}
+      {/* Empty state */}
       {!loading && !response && !error && (
         <div className="text-center py-20 text-gray-400">
           <SearchIcon />
-          <p className="mt-3 text-sm">Enter a search query to find candidates</p>
+          <p className="mt-3 text-sm">Enter a search query or paste a job spec to find candidates</p>
           <p className="text-xs mt-1">
-            Try "React developer", "machine learning", or "backend engineer"
+            Set a background (e.g. "High Frequency Trading") to focus results
           </p>
         </div>
       )}
@@ -99,18 +118,8 @@ export default function Home() {
 
 function SearchIcon() {
   return (
-    <svg
-      className="mx-auto h-12 w-12 text-gray-300"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={1.5}
-        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-      />
+    <svg className="mx-auto h-12 w-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
     </svg>
   );
 }
