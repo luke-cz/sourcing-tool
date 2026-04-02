@@ -54,21 +54,23 @@ interface GHRepo {
   topics: string[];
 }
 
-// Build keywords for repo search — strips filler words, keeps technical terms
+// Build keywords for repo search — use only the 2-3 most specific technical terms
 function buildRepoQuery(params: SearchParams): string {
   const stopWords = new Set([
     "and", "or", "the", "a", "an", "in", "of", "for", "with", "to", "at",
     "lead", "senior", "junior", "principal", "staff", "head", "chief",
+    "deep", "high", "ability", "knowledge", "experience", "understanding",
+    "management", "design", "implement", "proficient", "years",
   ]);
   const words = params.query
     .toLowerCase()
     .split(/\s+/)
     .filter((w) => w.length > 2 && !stopWords.has(w));
 
-  let q = words.slice(0, 4).join(" ");
+  // Take only 2 keywords max — shorter = more results
+  let q = words.slice(0, 2).join(" ");
   if (params.language) q += ` language:${params.language}`;
-  // Boost repo quality signal
-  q += " stars:>5";
+  q += " stars:>3";
   return q;
 }
 

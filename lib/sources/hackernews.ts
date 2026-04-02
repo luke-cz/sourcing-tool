@@ -19,7 +19,7 @@ interface AlgoliaResponse {
 // Fetch the most recent "Ask HN: Who wants to be hired?" thread ID
 async function getLatestHiringThread(): Promise<string | null> {
   const url = `${ALGOLIA}/search?query=Ask+HN+Who+wants+to+be+hired&tags=story,ask_hn&hitsPerPage=5`;
-  const res = await fetch(url, { next: { revalidate: 3600 } });
+  const res = await fetch(url, { next: { revalidate: 3600 }, signal: AbortSignal.timeout(8000) });
   if (!res.ok) return null;
 
   const data = (await res.json()) as AlgoliaResponse;
@@ -97,7 +97,7 @@ export async function searchHackerNews(params: SearchParams): Promise<Candidate[
 
   // Fetch comments from the thread
   const url = `${ALGOLIA}/search?tags=comment,story_${threadId}&hitsPerPage=100`;
-  const res = await fetch(url, { next: { revalidate: 3600 } });
+  const res = await fetch(url, { next: { revalidate: 3600 }, signal: AbortSignal.timeout(8000) });
   if (!res.ok) return [];
 
   const data = (await res.json()) as AlgoliaResponse;
