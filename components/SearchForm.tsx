@@ -5,7 +5,6 @@ import type { ParsedJD, SearchParams, Source } from "@/lib/types";
 
 const ALL_SOURCES: { id: Source; label: string }[] = [
   { id: "github", label: "GitHub" },
-  { id: "hackernews", label: "HackerNews" },
   { id: "stackoverflow", label: "Stack Overflow" },
   { id: "linkedin", label: "LinkedIn" },
 ];
@@ -23,7 +22,7 @@ export function SearchForm({ onSearch, loading }: Props) {
   const [jobSpec, setJobSpec] = useState("");
   const [showJobSpec, setShowJobSpec] = useState(false);
   const [sources, setSources] = useState<Set<Source>>(
-    new Set(["github", "hackernews", "stackoverflow"] as Source[])
+    new Set(["github", "stackoverflow"] as Source[])
   );
   const [parsedJD, setParsedJD] = useState<ParsedJD | null>(null);
   const [parsingJD, setParsingJD] = useState(false);

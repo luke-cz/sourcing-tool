@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { Candidate, SearchParams, SearchResponse, Source } from "@/lib/types";
 import { searchGitHub } from "@/lib/sources/github";
-import { searchHackerNews } from "@/lib/sources/hackernews";
 import { searchStackOverflow } from "@/lib/sources/stackoverflow";
 import { searchLinkedIn } from "@/lib/sources/linkedin";
 
 const sourceFetchers: Record<Source, (params: SearchParams) => Promise<Candidate[]>> = {
   github: searchGitHub,
-  hackernews: searchHackerNews,
   stackoverflow: searchStackOverflow,
   linkedin: searchLinkedIn,
 };
@@ -26,13 +24,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "query is required" }, { status: 400 });
   }
 
-  // Build enriched query: combine query + background context + top must-haves
   let enrichedQuery = query.trim();
   if (background) enrichedQuery = `${background} ${enrichedQuery}`;
 
   const activeSources: Source[] = Array.isArray(sources) && sources.length > 0
     ? sources
-    : ["github", "hackernews", "stackoverflow"];
+    : ["github", "stackoverflow"];
 
   const params: SearchParams = {
     query: enrichedQuery,
@@ -64,7 +61,6 @@ export async function POST(req: NextRequest) {
     }
   });
 
-  // Sort: tier 1 first, tier 2 second, null last
   candidates.sort((a, b) => {
     const ta = a.tier ?? 99;
     const tb = b.tier ?? 99;

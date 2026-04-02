@@ -11,7 +11,6 @@ interface Props {
 
 const SOURCE_LABELS: Record<Source, string> = {
   github: "GitHub",
-  hackernews: "HackerNews",
   stackoverflow: "Stack Overflow",
   linkedin: "LinkedIn",
 };

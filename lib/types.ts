@@ -1,4 +1,4 @@
-export type Source = "github" | "linkedin" | "hackernews" | "stackoverflow";
+export type Source = "github" | "linkedin" | "stackoverflow";
 
 export type TierLevel = 1 | 2 | null;
 
@@ -13,7 +13,7 @@ export interface Repo {
 export interface ParsedJD {
   mustHaves: string[];
   niceToHaves: string[];
-  searchQuery: string; // auto-generated query from must-haves
+  searchQuery: string;
 }
 
 export interface Candidate {

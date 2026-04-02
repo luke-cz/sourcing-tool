@@ -11,10 +11,6 @@ const config: Record<Source, { label: string; className: string }> = {
     label: "LinkedIn",
     className: "bg-blue-600 text-white",
   },
-  hackernews: {
-    label: "HN",
-    className: "bg-orange-500 text-white",
-  },
   stackoverflow: {
     label: "Stack Overflow",
     className: "bg-amber-500 text-white",
