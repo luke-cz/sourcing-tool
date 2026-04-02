@@ -23,7 +23,7 @@ export function SearchForm({ onSearch, loading }: Props) {
   const [jobSpec, setJobSpec] = useState("");
   const [showJobSpec, setShowJobSpec] = useState(false);
   const [sources, setSources] = useState<Set<Source>>(
-    new Set(["github", "hackernews", "stackoverflow"])
+    new Set(["github", "hackernews", "stackoverflow"] as Source[])
   );
   const [parsedJD, setParsedJD] = useState<ParsedJD | null>(null);
   const [parsingJD, setParsingJD] = useState(false);
