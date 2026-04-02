@@ -12,10 +12,9 @@ const ALL_SOURCES: { id: Source; label: string }[] = [
 
 const ALL_CATEGORIES = Object.keys(DEFAULT_TIER_MAP) as TierCategory[];
 
-const TIER_COLORS: Record<TierLevel | "null", string> = {
+const TIER_COLORS: Record<1 | 2, string> = {
   1: "bg-amber-50 border-amber-300 text-amber-800",
   2: "bg-slate-50 border-slate-300 text-slate-700",
-  null: "bg-gray-50 border-gray-200 text-gray-400",
 };
 
 interface Props {
