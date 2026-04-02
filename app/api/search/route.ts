@@ -25,13 +25,22 @@ const REGION_FALLBACKS: Record<WorldRegion, string[]> = {
 
 /**
  * Returns an ordered list of location strings to search.
- * Cities take priority, then countries, then region fallbacks.
+ * Cities take priority, then countries, then region fallbacks (union of all selected regions).
  * Empty array means "no location filter" (global).
  */
 function buildLocationTargets(config: LocationConfig): string[] {
   if (config.cities.length > 0) return config.cities;
   if (config.countries.length > 0) return config.countries;
-  return REGION_FALLBACKS[config.region] ?? [];
+  if (config.regions.length === 0) return []; // global — no location filter
+  // Combine fallback locations for every selected region (deduplicated)
+  const seen = new Set<string>();
+  const targets: string[] = [];
+  for (const region of config.regions) {
+    for (const loc of REGION_FALLBACKS[region] ?? []) {
+      if (!seen.has(loc)) { seen.add(loc); targets.push(loc); }
+    }
+  }
+  return targets;
 }
 
 export async function POST(req: NextRequest) {

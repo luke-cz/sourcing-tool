@@ -36,9 +36,9 @@ export type WorldRegion =
   | "africa";
 
 export interface LocationConfig {
-  region: WorldRegion;
-  countries: string[];   // optional — specific countries within region
-  cities: string[];      // optional — specific cities within countries/region
+  regions: WorldRegion[];  // empty = global (no filter); multiple = union of all selected
+  countries: string[];     // optional — specific countries within selected regions
+  cities: string[];        // optional — specific cities within countries/regions
 }
 
 export interface SearchSettings {

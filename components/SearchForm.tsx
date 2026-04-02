@@ -118,7 +118,7 @@ interface Props {
 }
 
 function defaultLocationConfig(): LocationConfig {
-  return { region: "global", countries: [], cities: [] };
+  return { regions: [], countries: [], cities: [] };
 }
 
 function defaultSettings(): SearchSettings {
@@ -476,22 +476,36 @@ export function SearchForm({ onSearch, loading }: Props) {
       <div className="space-y-3 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
         <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Location</p>
 
-        {/* Region pills — required */}
+        {/* Region pills — multi-select; Global = clear all */}
         <div>
-          <p className="text-xs text-slate-500 dark:text-slate-500 mb-1.5">Region <span className="text-blue-500">*</span></p>
+          <p className="text-xs text-slate-500 dark:text-slate-500 mb-1.5">
+            Region <span className="text-blue-500">*</span>
+            <span className="text-slate-400 dark:text-slate-600 ml-1">(select one or more)</span>
+          </p>
           <div className="flex flex-wrap gap-2">
             {REGIONS.map((r) => {
-              const active = settings.locationConfig.region === r.id;
+              const isGlobal = r.id === "global";
+              const active = isGlobal
+                ? settings.locationConfig.regions.length === 0
+                : settings.locationConfig.regions.includes(r.id);
+
               return (
                 <button
                   key={r.id}
                   type="button"
                   disabled={loading}
                   onClick={() =>
-                    setSettings((s) => ({
-                      ...s,
-                      locationConfig: { ...s.locationConfig, region: r.id },
-                    }))
+                    setSettings((s) => {
+                      if (isGlobal) {
+                        // Global clears all region selections
+                        return { ...s, locationConfig: { ...s.locationConfig, regions: [] } };
+                      }
+                      const current = s.locationConfig.regions;
+                      const next = current.includes(r.id)
+                        ? current.filter((x) => x !== r.id)
+                        : [...current, r.id];
+                      return { ...s, locationConfig: { ...s.locationConfig, regions: next } };
+                    })
                   }
                   className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
                     active
@@ -558,7 +572,9 @@ export function SearchForm({ onSearch, loading }: Props) {
         </div>
 
         {/* Location summary */}
-        {settings.locationConfig.region !== "global" && (
+        {(settings.locationConfig.regions.length > 0 ||
+          settings.locationConfig.countries.length > 0 ||
+          settings.locationConfig.cities.length > 0) && (
           <p className="text-xs text-slate-500 dark:text-slate-500">
             Searching:{" "}
             <span className="text-slate-700 dark:text-slate-300 font-medium">
@@ -566,7 +582,10 @@ export function SearchForm({ onSearch, loading }: Props) {
                 ? settings.locationConfig.cities.join(", ")
                 : settings.locationConfig.countries.length > 0
                 ? settings.locationConfig.countries.join(", ")
-                : `${REGIONS.find(r => r.id === settings.locationConfig.region)?.label} (top tech hubs)`}
+                : settings.locationConfig.regions
+                    .map((id) => REGIONS.find((r) => r.id === id)?.label)
+                    .filter(Boolean)
+                    .join(" + ") + " (top tech hubs)"}
             </span>
           </p>
         )}
