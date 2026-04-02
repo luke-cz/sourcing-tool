@@ -7,6 +7,7 @@ interface Props {
   response: SearchResponse;
   mustHaves?: string[];
   background?: string;
+  minYears?: number | null;
 }
 
 const SOURCE_LABELS: Record<Source, string> = {
@@ -15,7 +16,7 @@ const SOURCE_LABELS: Record<Source, string> = {
   linkedin: "LinkedIn",
 };
 
-export function ResultsGrid({ response, mustHaves, background }: Props) {
+export function ResultsGrid({ response, mustHaves, background, minYears }: Props) {
   const { candidates, errors } = response;
 
   if (candidates.length === 0 && errors.length === 0) {
@@ -86,6 +87,7 @@ export function ResultsGrid({ response, mustHaves, background }: Props) {
             candidate={candidate}
             mustHaves={mustHaves}
             background={background}
+            minYears={minYears}
           />
         ))}
       </div>

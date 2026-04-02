@@ -1,5 +1,5 @@
 import type { Candidate, SearchParams } from "@/lib/types";
-import { detectTier } from "@/lib/tiers";
+import { detectTierWithCategory } from "@/lib/tiers";
 
 // LinkedIn profiles sourced via Brave Search API (site:linkedin.com/in search)
 // Free tier: $5 credits/month (~1000 searches)
@@ -69,7 +69,7 @@ export async function searchLinkedIn(params: SearchParams): Promise<Candidate[]>
       const { name, headline } = parseLinkedInTitle(r.title);
       const username = extractUsername(r.url);
 
-      const base: Omit<Candidate, "tier"> = {
+      const base: Omit<Candidate, "tier" | "tierCategory"> = {
         id: `linkedin:${username}`,
         source: "linkedin",
         name,
@@ -87,6 +87,7 @@ export async function searchLinkedIn(params: SearchParams): Promise<Candidate[]>
         rawText: r.description ?? null,
         summary: null,
       };
-      return { ...base, tier: detectTier(base) };
+      const { tier, category } = detectTierWithCategory(base);
+      return { ...base, tier, tierCategory: category };
     });
 }

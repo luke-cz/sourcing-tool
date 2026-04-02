@@ -37,7 +37,7 @@ function buildPrompt(candidate: Candidate): string {
 
 export async function generateSummary(
   candidate: Candidate,
-  context?: { mustHaves?: string[]; background?: string }
+  context?: { mustHaves?: string[]; background?: string; minYears?: number | null }
 ): Promise<string> {
   const profileData = buildPrompt(candidate);
 
@@ -47,6 +47,9 @@ export async function generateSummary(
   const backgroundLine = context?.background
     ? `\nRole context: ${context.background}`
     : "";
+  const yearsLine = context?.minYears
+    ? `\nMinimum experience required: ${context.minYears}+ years`
+    : "";
 
   const message = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
@@ -54,7 +57,7 @@ export async function generateSummary(
     messages: [
       {
         role: "user",
-        content: `You are a recruiter's assistant.${backgroundLine}${mustHavesLine}
+        content: `You are a recruiter's assistant.${backgroundLine}${mustHavesLine}${yearsLine}
 
 Given the following public profile data, write a 2-3 sentence professional summary. Focus on: (1) what they build / main technical focus, (2) experience signals, (3) how well they match the key requirements if provided. Be factual and concise. Do not invent information not present in the data.
 

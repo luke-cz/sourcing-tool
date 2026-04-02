@@ -2,6 +2,15 @@ export type Source = "github" | "linkedin" | "stackoverflow";
 
 export type TierLevel = 1 | 2 | null;
 
+export type TierCategory =
+  | "faang"
+  | "hft_quant"
+  | "big_tech"
+  | "top_ai"
+  | "top_fintech"
+  | "web3"
+  | "strong_startups";
+
 export interface Repo {
   name: string;
   description: string | null;
@@ -14,6 +23,13 @@ export interface ParsedJD {
   mustHaves: string[];
   niceToHaves: string[];
   searchQuery: string;
+}
+
+export interface SearchSettings {
+  tierCategories: TierCategory[];         // which tier groups are active
+  tierMap: Record<TierCategory, TierLevel>; // which tier level each group maps to
+  minYears: number | null;                // minimum years of experience
+  location2: string;                      // second optional location
 }
 
 export interface Candidate {
@@ -34,16 +50,20 @@ export interface Candidate {
   rawText: string | null;
   summary: string | null;
   tier: TierLevel;
+  tierCategory: TierCategory | null;
 }
 
 export interface SearchParams {
   query: string;
   sources: Source[];
   location?: string;
+  location2?: string;
   language?: string;
   background?: string;
   mustHaves?: string[];
   niceToHaves?: string[];
+  minYears?: number | null;
+  settings?: SearchSettings;
 }
 
 export interface SearchResponse {

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, FormEvent } from "react";
-import type { ParsedJD, SearchParams, Source } from "@/lib/types";
+import type { ParsedJD, SearchParams, SearchSettings, Source, TierCategory, TierLevel } from "@/lib/types";
+import { TIER_CATEGORY_LABELS, DEFAULT_TIER_MAP } from "@/lib/tiers";
 
 const ALL_SOURCES: { id: Source; label: string }[] = [
   { id: "github", label: "GitHub" },
@@ -9,9 +10,26 @@ const ALL_SOURCES: { id: Source; label: string }[] = [
   { id: "linkedin", label: "LinkedIn" },
 ];
 
+const ALL_CATEGORIES = Object.keys(DEFAULT_TIER_MAP) as TierCategory[];
+
+const TIER_COLORS: Record<TierLevel | "null", string> = {
+  1: "bg-amber-50 border-amber-300 text-amber-800",
+  2: "bg-slate-50 border-slate-300 text-slate-700",
+  null: "bg-gray-50 border-gray-200 text-gray-400",
+};
+
 interface Props {
-  onSearch: (params: SearchParams & { background?: string }, parsedJD?: ParsedJD) => void;
+  onSearch: (params: SearchParams, parsedJD?: ParsedJD) => void;
   loading: boolean;
+}
+
+function defaultSettings(): SearchSettings {
+  return {
+    tierCategories: [...ALL_CATEGORIES],
+    tierMap: { ...DEFAULT_TIER_MAP },
+    minYears: null,
+    location2: "",
+  };
 }
 
 export function SearchForm({ onSearch, loading }: Props) {
@@ -21,12 +39,14 @@ export function SearchForm({ onSearch, loading }: Props) {
   const [background, setBackground] = useState("");
   const [jobSpec, setJobSpec] = useState("");
   const [showJobSpec, setShowJobSpec] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [sources, setSources] = useState<Set<Source>>(
     new Set(["github", "stackoverflow"] as Source[])
   );
   const [parsedJD, setParsedJD] = useState<ParsedJD | null>(null);
   const [parsingJD, setParsingJD] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
+  const [settings, setSettings] = useState<SearchSettings>(defaultSettings());
 
   function toggleSource(source: Source) {
     setSources((prev) => {
@@ -39,6 +59,42 @@ export function SearchForm({ onSearch, loading }: Props) {
       }
       return next;
     });
+  }
+
+  function toggleCategory(cat: TierCategory) {
+    setSettings((prev) => {
+      const has = prev.tierCategories.includes(cat);
+      return {
+        ...prev,
+        tierCategories: has
+          ? prev.tierCategories.filter((c) => c !== cat)
+          : [...prev.tierCategories, cat],
+      };
+    });
+  }
+
+  function setTierLevel(cat: TierCategory, level: TierLevel) {
+    setSettings((prev) => ({
+      ...prev,
+      tierMap: { ...prev.tierMap, [cat]: level },
+    }));
+  }
+
+  function buildParams(overrideQuery?: string, overrideJD?: ParsedJD): SearchParams {
+    const effectiveQuery = overrideQuery ?? query.trim() ?? parsedJD?.searchQuery ?? "";
+    const jd = overrideJD ?? parsedJD;
+    return {
+      query: effectiveQuery,
+      sources: Array.from(sources),
+      location: location.trim() || undefined,
+      location2: settings.location2.trim() || undefined,
+      language: language.trim() || undefined,
+      background: background.trim() || undefined,
+      mustHaves: jd?.mustHaves,
+      niceToHaves: jd?.niceToHaves,
+      minYears: settings.minYears,
+      settings,
+    };
   }
 
   async function handleParseJD() {
@@ -57,19 +113,7 @@ export function SearchForm({ onSearch, loading }: Props) {
       const parsed = data as ParsedJD;
       setParsedJD(parsed);
       if (parsed.searchQuery) setQuery(parsed.searchQuery);
-      // Auto-trigger search with AI-generated query
-      onSearch(
-        {
-          query: parsed.searchQuery,
-          sources: Array.from(sources),
-          location: location.trim() || undefined,
-          language: language.trim() || undefined,
-          background: background.trim() || undefined,
-          mustHaves: parsed.mustHaves,
-          niceToHaves: parsed.niceToHaves,
-        },
-        parsed
-      );
+      onSearch(buildParams(parsed.searchQuery, parsed), parsed);
     } catch (err) {
       setParseError(err instanceof Error ? err.message : "Failed to parse job spec");
     } finally {
@@ -81,26 +125,14 @@ export function SearchForm({ onSearch, loading }: Props) {
     e.preventDefault();
     const effectiveQuery = query.trim() || parsedJD?.searchQuery || "";
     if (!effectiveQuery) return;
-
-    onSearch(
-      {
-        query: effectiveQuery,
-        sources: Array.from(sources),
-        location: location.trim() || undefined,
-        language: language.trim() || undefined,
-        background: background.trim() || undefined,
-        mustHaves: parsedJD?.mustHaves,
-        niceToHaves: parsedJD?.niceToHaves,
-      },
-      parsedJD ?? undefined
-    );
+    onSearch(buildParams(effectiveQuery), parsedJD ?? undefined);
   }
 
   const canSearch = (query.trim() || parsedJD?.searchQuery) && !loading;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Background row */}
+      {/* Background */}
       <div className="flex gap-2 items-center">
         <label className="text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">
           Background
@@ -110,12 +142,12 @@ export function SearchForm({ onSearch, loading }: Props) {
           value={background}
           onChange={(e) => setBackground(e.target.value)}
           placeholder='e.g. "High Frequency Trading", "AI startup", "crypto exchange"'
-          className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           disabled={loading}
         />
       </div>
 
-      {/* Job spec toggle */}
+      {/* Job spec */}
       <div>
         <button
           type="button"
@@ -133,7 +165,7 @@ export function SearchForm({ onSearch, loading }: Props) {
               onChange={(e) => setJobSpec(e.target.value)}
               placeholder="Paste the full job description here…"
               rows={6}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none font-mono"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none font-mono"
               disabled={loading || parsingJD}
             />
             <button
@@ -144,9 +176,7 @@ export function SearchForm({ onSearch, loading }: Props) {
             >
               {parsingJD ? "Analyzing & searching…" : "Analyze & search"}
             </button>
-            {parseError && (
-              <p className="text-xs text-red-600">{parseError}</p>
-            )}
+            {parseError && <p className="text-xs text-red-600">{parseError}</p>}
           </div>
         )}
       </div>
@@ -185,8 +215,8 @@ export function SearchForm({ onSearch, loading }: Props) {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={parsedJD ? parsedJD.searchQuery : 'e.g. "React developer" or "machine learning engineer"'}
-          className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder={parsedJD ? parsedJD.searchQuery : 'e.g. "react developer" or "rust trading"'}
+          className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           disabled={loading}
         />
         <button
@@ -202,13 +232,11 @@ export function SearchForm({ onSearch, loading }: Props) {
               </svg>
               Searching…
             </span>
-          ) : (
-            "Search"
-          )}
+          ) : "Search"}
         </button>
       </div>
 
-      {/* Sources + filters */}
+      {/* Sources + filters row */}
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Sources:</span>
@@ -221,13 +249,7 @@ export function SearchForm({ onSearch, loading }: Props) {
                   : "bg-white border-gray-200 text-gray-500 hover:border-gray-300"
               }`}
             >
-              <input
-                type="checkbox"
-                className="sr-only"
-                checked={sources.has(id)}
-                onChange={() => toggleSource(id)}
-                disabled={loading}
-              />
+              <input type="checkbox" className="sr-only" checked={sources.has(id)} onChange={() => toggleSource(id)} disabled={loading} />
               {label}
             </label>
           ))}
@@ -238,8 +260,16 @@ export function SearchForm({ onSearch, loading }: Props) {
             type="text"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            placeholder="Location"
-            className="w-32 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="Location 1"
+            className="w-28 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={loading}
+          />
+          <input
+            type="text"
+            value={settings.location2}
+            onChange={(e) => setSettings((s) => ({ ...s, location2: e.target.value }))}
+            placeholder="Location 2"
+            className="w-28 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             disabled={loading}
           />
           <input
@@ -247,10 +277,98 @@ export function SearchForm({ onSearch, loading }: Props) {
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
             placeholder="Language"
-            className="w-32 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-28 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             disabled={loading}
           />
         </div>
+      </div>
+
+      {/* Settings panel */}
+      <div>
+        <button
+          type="button"
+          onClick={() => setShowSettings((v) => !v)}
+          className="text-sm text-gray-500 hover:text-gray-700 font-medium flex items-center gap-1"
+        >
+          <span>{showSettings ? "▾" : "▸"}</span>
+          Search settings
+        </button>
+
+        {showSettings && (
+          <div className="mt-3 space-y-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+            {/* Years of experience */}
+            <div className="flex items-center gap-3">
+              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">
+                Min. years exp.
+              </label>
+              <div className="flex items-center gap-2">
+                {[null, 2, 3, 5, 7, 10].map((yr) => (
+                  <button
+                    key={String(yr)}
+                    type="button"
+                    onClick={() => setSettings((s) => ({ ...s, minYears: yr }))}
+                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                      settings.minYears === yr
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+                    }`}
+                  >
+                    {yr === null ? "Any" : `${yr}+`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Tier groups */}
+            <div>
+              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
+                Company tiers — toggle groups & assign tier level
+              </p>
+              <div className="space-y-2">
+                {ALL_CATEGORIES.map((cat) => {
+                  const active = settings.tierCategories.includes(cat);
+                  const currentLevel = settings.tierMap[cat];
+                  return (
+                    <div key={cat} className="flex items-center gap-3">
+                      {/* Toggle group on/off */}
+                      <button
+                        type="button"
+                        onClick={() => toggleCategory(cat)}
+                        className={`w-36 text-left px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                          active
+                            ? "bg-gray-800 text-white border-gray-800"
+                            : "bg-white text-gray-400 border-gray-200"
+                        }`}
+                      >
+                        {TIER_CATEGORY_LABELS[cat]}
+                      </button>
+
+                      {/* Tier level selector */}
+                      {active && (
+                        <div className="flex items-center gap-1">
+                          {([1, 2] as TierLevel[]).map((lvl) => (
+                            <button
+                              key={lvl}
+                              type="button"
+                              onClick={() => setTierLevel(cat, lvl)}
+                              className={`px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                                currentLevel === lvl
+                                  ? TIER_COLORS[lvl]
+                                  : "bg-white border-gray-200 text-gray-400"
+                              }`}
+                            >
+                              Tier {lvl}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </form>
   );

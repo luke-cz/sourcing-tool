@@ -3,12 +3,14 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import type { Candidate } from "@/lib/types";
+import { TIER_CATEGORY_LABELS } from "@/lib/tiers";
 import { SourceBadge } from "@/components/SourceBadge";
 
 interface Props {
   candidate: Candidate;
   mustHaves?: string[];
   background?: string;
+  minYears?: number | null;
 }
 
 const TIER_CONFIG = {
@@ -16,7 +18,7 @@ const TIER_CONFIG = {
   2: { label: "Tier 2", className: "bg-slate-50 text-slate-700 border-slate-300", title: "Strong background (established tech or well-known startup)" },
 };
 
-export function CandidateCard({ candidate, mustHaves, background }: Props) {
+export function CandidateCard({ candidate, mustHaves, background, minYears }: Props) {
   const [summary, setSummary] = useState<string | null>(candidate.summary);
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [summaryError, setSummaryError] = useState(false);
@@ -28,7 +30,7 @@ export function CandidateCard({ candidate, mustHaves, background }: Props) {
     fetch("/api/summarize", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ candidate, mustHaves, background }),
+      body: JSON.stringify({ candidate, mustHaves, background, minYears }),
     })
       .then((r) => r.json())
       .then((data) => {
@@ -78,6 +80,11 @@ export function CandidateCard({ candidate, mustHaves, background }: Props) {
                 title={tierConfig.title}
               >
                 {tierConfig.label}
+                {candidate.tierCategory && (
+                  <span className="ml-1 font-normal opacity-75">
+                    · {TIER_CATEGORY_LABELS[candidate.tierCategory]}
+                  </span>
+                )}
               </span>
             )}
           </div>

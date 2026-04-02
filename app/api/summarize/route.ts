@@ -8,10 +8,11 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { candidate, mustHaves, background } = body as {
+  const { candidate, mustHaves, background, minYears } = body as {
     candidate: Candidate;
     mustHaves?: string[];
     background?: string;
+    minYears?: number | null;
   };
 
   if (!candidate?.id) {
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const summary = await generateSummary(candidate, { mustHaves, background });
+    const summary = await generateSummary(candidate, { mustHaves, background, minYears });
     return NextResponse.json({ summary });
   } catch (err) {
     console.error("[summarize] error:", err);

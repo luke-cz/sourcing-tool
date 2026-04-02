@@ -8,6 +8,7 @@ import type { ParsedJD, SearchParams, SearchResponse } from "@/lib/types";
 interface SearchContext {
   mustHaves?: string[];
   background?: string;
+  minYears?: number | null;
 }
 
 export default function Home() {
@@ -26,6 +27,7 @@ export default function Home() {
     setContext({
       mustHaves: parsedJD?.mustHaves,
       background: params.background,
+      minYears: params.minYears,
     });
 
     try {
@@ -99,6 +101,7 @@ export default function Home() {
           response={response}
           mustHaves={context.mustHaves}
           background={context.background}
+          minYears={context.minYears}
         />
       )}
 

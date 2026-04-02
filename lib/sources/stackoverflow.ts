@@ -1,5 +1,5 @@
 import type { Candidate, SearchParams } from "@/lib/types";
-import { detectTier } from "@/lib/tiers";
+import { detectTierWithCategory } from "@/lib/tiers";
 
 const BASE = "https://api.stackexchange.com/2.3";
 
@@ -40,7 +40,7 @@ export async function searchStackOverflow(params: SearchParams): Promise<Candida
   const data = (await res.json()) as SOResponse;
 
   return data.items.map((user): Candidate => {
-    const base: Omit<Candidate, "tier"> = {
+    const base: Omit<Candidate, "tier" | "tierCategory"> = {
       id: `stackoverflow:${user.user_id}`,
       source: "stackoverflow",
       name: user.display_name,
@@ -58,7 +58,8 @@ export async function searchStackOverflow(params: SearchParams): Promise<Candida
       rawText: null,
       summary: null,
     };
-    return { ...base, tier: detectTier(base) };
+    const { tier, category } = detectTierWithCategory(base);
+    return { ...base, tier, tierCategory: category };
   });
 }
 
