@@ -54,10 +54,17 @@ export async function searchLinkedIn(params: SearchParams): Promise<Candidate[]>
   )}&num=10`;
 
   const res = await fetch(url, { next: { revalidate: 0 } });
-  if (!res.ok) return [];
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({}));
+    console.error("[linkedin] Google CSE error:", res.status, JSON.stringify(errorBody));
+    return [];
+  }
 
   const data = (await res.json()) as GoogleCSEResponse;
-  if (!data.items) return [];
+  if (!data.items) {
+    console.error("[linkedin] No items returned from Google CSE");
+    return [];
+  }
 
   return data.items
     .filter((item) => item.link.includes("linkedin.com/in/"))

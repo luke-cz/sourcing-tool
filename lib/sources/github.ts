@@ -132,8 +132,8 @@ export async function searchGitHub(params: SearchParams): Promise<Candidate[]> {
   const repoQ = encodeURIComponent(buildRepoQuery(params));
 
   const [userResult, repoResult] = await Promise.allSettled([
-    fetchJson<GHUserSearch>(`${BASE}/search/users?q=${userQ}&per_page=8&sort=followers`),
-    fetchJson<GHRepoSearch>(`${BASE}/search/repositories?q=${repoQ}&per_page=10&sort=stars`),
+    fetchJson<GHUserSearch>(`${BASE}/search/users?q=${userQ}&per_page=15&sort=followers`),
+    fetchJson<GHRepoSearch>(`${BASE}/search/repositories?q=${repoQ}&per_page=15&sort=stars`),
   ]);
 
   // Collect unique logins, repo owners first (more relevant)
@@ -158,8 +158,8 @@ export async function searchGitHub(params: SearchParams): Promise<Candidate[]> {
     });
   }
 
-  // Enrich top 10 unique profiles
-  const enriched = await Promise.allSettled(logins.slice(0, 10).map(enrichUser));
+  // Enrich top 20 unique profiles
+  const enriched = await Promise.allSettled(logins.slice(0, 20).map(enrichUser));
 
   return enriched
     .filter((r): r is PromiseFulfilledResult<{ user: GHUser; repos: GHRepo[] }> => r.status === "fulfilled")
