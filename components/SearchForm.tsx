@@ -352,7 +352,7 @@ export function SearchForm({ onSearch, loading }: Props) {
                               onClick={() => setTierLevel(cat, lvl)}
                               className={`px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors ${
                                 currentLevel === lvl
-                                  ? TIER_COLORS[lvl]
+                                  ? TIER_COLORS[lvl as 1 | 2]
                                   : "bg-white border-gray-200 text-gray-400"
                               }`}
                             >
