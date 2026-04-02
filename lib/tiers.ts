@@ -31,53 +31,53 @@ export const DEFAULT_TIER_MAP: Record<TierCategory, TierLevel> = {
 };
 
 interface Company {
-  name: string;
+  name: string;          // lowercase, used for detection
+  displayName?: string;  // proper-cased, used for LinkedIn boolean queries
   aliases?: string[];
   category: TierCategory;
 }
 
 const COMPANIES: Company[] = [
   // ─── FAANG ───────────────────────────────────────────────────────────────
-  { name: "meta", aliases: ["facebook"], category: "faang" },
-  { name: "apple", category: "faang" },
-  { name: "amazon", aliases: ["aws"], category: "faang" },
-  { name: "netflix", category: "faang" },
-  { name: "google", aliases: ["alphabet", "deepmind", "google deepmind", "waymo"], category: "faang" },
+  { name: "meta", displayName: "Meta", aliases: ["facebook"], category: "faang" },
+  { name: "apple", displayName: "Apple", category: "faang" },
+  { name: "amazon", displayName: "Amazon", aliases: ["aws"], category: "faang" },
+  { name: "netflix", displayName: "Netflix", category: "faang" },
+  { name: "google", displayName: "Google", aliases: ["alphabet", "deepmind", "google deepmind", "waymo"], category: "faang" },
 
   // ─── HFT / QUANT ─────────────────────────────────────────────────────────
-  { name: "jane street", category: "hft_quant" },
-  { name: "citadel", aliases: ["citadel securities", "citadel llc"], category: "hft_quant" },
-  { name: "two sigma", category: "hft_quant" },
-  { name: "de shaw", aliases: ["d.e. shaw", "d. e. shaw"], category: "hft_quant" },
-  { name: "jump trading", category: "hft_quant" },
-  { name: "virtu", aliases: ["virtu financial"], category: "hft_quant" },
-  { name: "hudson river trading", aliases: ["hrt"], category: "hft_quant" },
-  { name: "optiver", category: "hft_quant" },
-  { name: "imc trading", aliases: ["imc"], category: "hft_quant" },
-  { name: "akuna capital", category: "hft_quant" },
-  { name: "susquehanna", aliases: ["sig", "susquehanna international group"], category: "hft_quant" },
-  { name: "tower research", aliases: ["tower research capital"], category: "hft_quant" },
-  { name: "renaissance technologies", aliases: ["renaissance", "rentec"], category: "hft_quant" },
-  { name: "point72", aliases: ["point 72"], category: "hft_quant" },
-  { name: "millennium management", aliases: ["millennium"], category: "hft_quant" },
-  { name: "man group", aliases: ["man ahl", "man numeric"], category: "hft_quant" },
-  { name: "winton", aliases: ["winton group"], category: "hft_quant" },
-  { name: "worldquant", category: "hft_quant" },
-  { name: "drw", aliases: ["drw trading", "cumberland drw"], category: "hft_quant" },
-  { name: "xtx markets", category: "hft_quant" },
-  { name: "flow traders", category: "hft_quant" },
-  { name: "five rings", aliases: ["five rings capital"], category: "hft_quant" },
-  { name: "belvedere trading", category: "hft_quant" },
-  { name: "tibra", category: "hft_quant" },
-  { name: "squarepoint", aliases: ["squarepoint capital"], category: "hft_quant" },
-  { name: "marshall wace", category: "hft_quant" },
-  { name: "quantitative brokers", category: "hft_quant" },
-  { name: "g-research", aliases: ["g research"], category: "hft_quant" },
-  { name: "qrt", aliases: ["qube research", "qube research and technologies"], category: "hft_quant" },
-  { name: "state street", category: "hft_quant" },
-  { name: "blackrock", category: "hft_quant" },
-  { name: "alyssa partners", category: "hft_quant" },
-  { name: "cubist", aliases: ["cubist systematic strategies"], category: "hft_quant" },
+  { name: "jane street", displayName: "Jane Street", category: "hft_quant" },
+  { name: "citadel", displayName: "Citadel", aliases: ["citadel securities", "citadel llc"], category: "hft_quant" },
+  { name: "two sigma", displayName: "Two Sigma", category: "hft_quant" },
+  { name: "de shaw", displayName: "D.E. Shaw", aliases: ["d.e. shaw", "d. e. shaw"], category: "hft_quant" },
+  { name: "jump trading", displayName: "Jump Trading", category: "hft_quant" },
+  { name: "virtu", displayName: "Virtu Financial", aliases: ["virtu financial"], category: "hft_quant" },
+  { name: "hudson river trading", displayName: "Hudson River Trading", aliases: ["hrt"], category: "hft_quant" },
+  { name: "optiver", displayName: "Optiver", category: "hft_quant" },
+  { name: "imc trading", displayName: "IMC Trading", aliases: ["imc"], category: "hft_quant" },
+  { name: "akuna capital", displayName: "Akuna Capital", category: "hft_quant" },
+  { name: "susquehanna", displayName: "Susquehanna", aliases: ["sig", "susquehanna international group"], category: "hft_quant" },
+  { name: "tower research", displayName: "Tower Research Capital", aliases: ["tower research capital"], category: "hft_quant" },
+  { name: "renaissance technologies", displayName: "Renaissance Technologies", aliases: ["renaissance", "rentec"], category: "hft_quant" },
+  { name: "point72", displayName: "Point72", aliases: ["point 72"], category: "hft_quant" },
+  { name: "millennium management", displayName: "Millennium Management", aliases: ["millennium"], category: "hft_quant" },
+  { name: "man group", displayName: "Man Group", aliases: ["man ahl", "man numeric"], category: "hft_quant" },
+  { name: "winton", displayName: "Winton", aliases: ["winton group"], category: "hft_quant" },
+  { name: "worldquant", displayName: "WorldQuant", category: "hft_quant" },
+  { name: "drw", displayName: "DRW", aliases: ["drw trading", "cumberland drw"], category: "hft_quant" },
+  { name: "xtx markets", displayName: "XTX Markets", category: "hft_quant" },
+  { name: "flow traders", displayName: "Flow Traders", category: "hft_quant" },
+  { name: "five rings", displayName: "Five Rings", aliases: ["five rings capital"], category: "hft_quant" },
+  { name: "belvedere trading", displayName: "Belvedere Trading", category: "hft_quant" },
+  { name: "tibra", displayName: "Tibra", category: "hft_quant" },
+  { name: "squarepoint", displayName: "Squarepoint Capital", aliases: ["squarepoint capital"], category: "hft_quant" },
+  { name: "marshall wace", displayName: "Marshall Wace", category: "hft_quant" },
+  { name: "quantitative brokers", displayName: "Quantitative Brokers", category: "hft_quant" },
+  { name: "g-research", displayName: "G-Research", aliases: ["g research"], category: "hft_quant" },
+  { name: "qrt", displayName: "QRT", aliases: ["qube research", "qube research and technologies"], category: "hft_quant" },
+  { name: "state street", displayName: "State Street", category: "hft_quant" },
+  { name: "blackrock", displayName: "BlackRock", category: "hft_quant" },
+  { name: "cubist", displayName: "Cubist Systematic Strategies", aliases: ["cubist systematic strategies"], category: "hft_quant" },
 
   // ─── TOP AI ──────────────────────────────────────────────────────────────
   { name: "openai", category: "top_ai" },
@@ -137,6 +137,40 @@ const COMPANIES: Company[] = [
   { name: "sumup", category: "top_fintech" },
   { name: "paysafe", category: "top_fintech" },
   { name: "navan", aliases: ["tripactions"], category: "top_fintech" },
+  { name: "marqeta", category: "top_fintech" },
+  { name: "airwallex", category: "top_fintech" },
+  { name: "gocardless", category: "top_fintech" },
+  { name: "mollie", category: "top_fintech" },
+  { name: "rapyd", category: "top_fintech" },
+  { name: "nium", category: "top_fintech" },
+  { name: "deel", category: "top_fintech" },
+  { name: "gusto", category: "top_fintech" },
+  { name: "remote", aliases: ["remote.com"], category: "top_fintech" },
+  { name: "sofi", aliases: ["sofi technologies"], category: "top_fintech" },
+  { name: "betterment", category: "top_fintech" },
+  { name: "wealthfront", category: "top_fintech" },
+  { name: "acorns", category: "top_fintech" },
+  { name: "trade republic", category: "top_fintech" },
+  { name: "etoro", category: "top_fintech" },
+  { name: "scalable capital", category: "top_fintech" },
+  { name: "tide", aliases: ["tide platform"], category: "top_fintech" },
+  { name: "pleo", category: "top_fintech" },
+  { name: "spendesk", category: "top_fintech" },
+  { name: "payhawk", category: "top_fintech" },
+  { name: "razorpay", category: "top_fintech" },
+  { name: "phonepe", category: "top_fintech" },
+  { name: "paytm", aliases: ["one97 communications"], category: "top_fintech" },
+  { name: "dave", aliases: ["dave inc"], category: "top_fintech" },
+  { name: "current", aliases: ["current banking"], category: "top_fintech" },
+  { name: "lendingclub", aliases: ["lending club"], category: "top_fintech" },
+  { name: "freetrade", category: "top_fintech" },
+  { name: "trading 212", category: "top_fintech" },
+  { name: "bitpanda", category: "top_fintech" },
+  { name: "yapily", category: "top_fintech" },
+  { name: "truelayer", category: "top_fintech" },
+  { name: "curve", aliases: ["curve card"], category: "top_fintech" },
+  { name: "monese", category: "top_fintech" },
+  { name: "oaknorth", aliases: ["oak north"], category: "top_fintech" },
 
   // ─── WEB3 / CRYPTO ────────────────────────────────────────────────────────
   { name: "coinbase", category: "web3" },
@@ -180,6 +214,34 @@ const COMPANIES: Company[] = [
   { name: "farcaster", category: "web3" },
   { name: "bitgo", category: "web3" },
   { name: "anchorage", aliases: ["anchorage digital"], category: "web3" },
+  { name: "ava labs", aliases: ["avalanche"], category: "web3" },
+  { name: "parity technologies", aliases: ["polkadot", "substrate"], category: "web3" },
+  { name: "near protocol", aliases: ["near", "pagoda"], category: "web3" },
+  { name: "aptos labs", aliases: ["aptos"], category: "web3" },
+  { name: "mysten labs", aliases: ["sui"], category: "web3" },
+  { name: "protocol labs", aliases: ["filecoin", "ipfs"], category: "web3" },
+  { name: "opensea", category: "web3" },
+  { name: "the graph", aliases: ["graph protocol"], category: "web3" },
+  { name: "lido finance", aliases: ["lido"], category: "web3" },
+  { name: "gnosis", aliases: ["safe global", "gnosis safe"], category: "web3" },
+  { name: "1inch", aliases: ["1inch network"], category: "web3" },
+  { name: "magic eden", category: "web3" },
+  { name: "jito labs", aliases: ["jito"], category: "web3" },
+  { name: "helius", category: "web3" },
+  { name: "pendle finance", aliases: ["pendle"], category: "web3" },
+  { name: "euler finance", aliases: ["euler"], category: "web3" },
+  { name: "morpho labs", aliases: ["morpho"], category: "web3" },
+  { name: "tenderly", category: "web3" },
+  { name: "nomic foundation", aliases: ["hardhat"], category: "web3" },
+  { name: "cosmos", aliases: ["interchain", "tendermint"], category: "web3" },
+  { name: "celestia", aliases: ["celestia labs"], category: "web3" },
+  { name: "fuel labs", aliases: ["fuel network"], category: "web3" },
+  { name: "scroll", aliases: ["scroll tech"], category: "web3" },
+  { name: "zora", aliases: ["zora network"], category: "web3" },
+  { name: "base", aliases: ["base protocol"], category: "web3" },
+  { name: "jupiter exchange", aliases: ["jupiter ag"], category: "web3" },
+  { name: "drift protocol", category: "web3" },
+  { name: "cow protocol", aliases: ["cowswap"], category: "web3" },
 
   // ─── STRONG STARTUPS ──────────────────────────────────────────────────────
   { name: "databricks", category: "strong_startups" },
@@ -252,6 +314,22 @@ export function detectTierWithCategory(
 
   return { tier: null, category: null };
 }
+
+// Export companies grouped by category with display names for LinkedIn boolean queries
+function toDisplayName(company: Company): string {
+  if (company.displayName) return company.displayName;
+  // Title-case the name
+  return company.name.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+export const COMPANIES_BY_CATEGORY: Record<TierCategory, { displayName: string }[]> = (() => {
+  const result = {} as Record<TierCategory, { displayName: string }[]>;
+  for (const company of COMPANIES) {
+    if (!result[company.category]) result[company.category] = [];
+    result[company.category].push({ displayName: toDisplayName(company) });
+  }
+  return result;
+})();
 
 // Backward-compatible wrapper
 export function detectTier(
