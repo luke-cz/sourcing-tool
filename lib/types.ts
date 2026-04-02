@@ -25,11 +25,27 @@ export interface ParsedJD {
   searchQuery: string;
 }
 
+// ─── Location ─────────────────────────────────────────────────────────────
+export type WorldRegion =
+  | "global"
+  | "north_america"
+  | "south_america"
+  | "europe"
+  | "asia_pacific"
+  | "middle_east"
+  | "africa";
+
+export interface LocationConfig {
+  region: WorldRegion;
+  countries: string[];   // optional — specific countries within region
+  cities: string[];      // optional — specific cities within countries/region
+}
+
 export interface SearchSettings {
-  tierCategories: TierCategory[];         // which tier groups are active
+  tierCategories: TierCategory[];           // which tier groups are active
   tierMap: Record<TierCategory, TierLevel>; // which tier level each group maps to
-  minYears: number | null;                // minimum years of experience
-  location2: string;                      // second optional location
+  minYears: number | null;                  // minimum years of experience
+  locationConfig: LocationConfig;           // region + optional countries/cities
 }
 
 export interface Candidate {
@@ -56,8 +72,7 @@ export interface Candidate {
 export interface SearchParams {
   query: string;
   sources: Source[];
-  location?: string;
-  location2?: string;
+  location?: string;          // derived at runtime from locationConfig
   language?: string;
   background?: string;
   mustHaves?: string[];

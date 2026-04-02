@@ -1,8 +1,19 @@
 "use client";
 
-import { useState, FormEvent } from "react";
-import type { ParsedJD, SearchParams, SearchSettings, Source, TierCategory, TierLevel } from "@/lib/types";
+import { useState, FormEvent, KeyboardEvent } from "react";
+import type { LocationConfig, ParsedJD, SearchParams, SearchSettings, Source, TierCategory, TierLevel, WorldRegion } from "@/lib/types";
 import { TIER_CATEGORY_LABELS, DEFAULT_TIER_MAP } from "@/lib/tiers";
+
+// ─── Region config ────────────────────────────────────────────────────────────
+const REGIONS: { id: WorldRegion; label: string; icon: string }[] = [
+  { id: "global",        label: "Global",        icon: "🌐" },
+  { id: "north_america", label: "North America",  icon: "🌎" },
+  { id: "south_america", label: "South America",  icon: "🌎" },
+  { id: "europe",        label: "Europe",         icon: "🌍" },
+  { id: "asia_pacific",  label: "Asia Pacific",   icon: "🌏" },
+  { id: "middle_east",   label: "Middle East",    icon: "🌍" },
+  { id: "africa",        label: "Africa",         icon: "🌍" },
+];
 
 const ALL_SOURCES: { id: Source; label: string }[] = [
   { id: "github", label: "GitHub" },
@@ -106,19 +117,24 @@ interface Props {
   loading: boolean;
 }
 
+function defaultLocationConfig(): LocationConfig {
+  return { region: "global", countries: [], cities: [] };
+}
+
 function defaultSettings(): SearchSettings {
   return {
     tierCategories: [...ALL_CATEGORIES],
     tierMap: { ...DEFAULT_TIER_MAP },
     minYears: null,
-    location2: "",
+    locationConfig: defaultLocationConfig(),
   };
 }
 
 export function SearchForm({ onSearch, loading }: Props) {
   const [query, setQuery] = useState("");
-  const [location, setLocation] = useState("");
   const [language, setLanguage] = useState("");
+  const [countryInput, setCountryInput] = useState("");
+  const [cityInput, setCityInput] = useState("");
   const [background, setBackground] = useState("");
   const [jobSpec, setJobSpec] = useState("");
   const [showJobSpec, setShowJobSpec] = useState(false);
@@ -192,8 +208,6 @@ export function SearchForm({ onSearch, loading }: Props) {
     return {
       query: effectiveQuery,
       sources: Array.from(sources),
-      location: location.trim() || undefined,
-      location2: settings.location2.trim() || undefined,
       language: language.trim() || undefined,
       background: background.trim() || undefined,
       mustHaves: jd?.mustHaves,
@@ -201,6 +215,43 @@ export function SearchForm({ onSearch, loading }: Props) {
       minYears: settings.minYears,
       settings,
     };
+  }
+
+  // ── Tag-input helpers ──────────────────────────────────────────────────
+  function addTag(field: "countries" | "cities", value: string) {
+    const v = value.trim();
+    if (!v) return;
+    setSettings((s) => {
+      const existing = s.locationConfig[field];
+      if (existing.includes(v)) return s;
+      return { ...s, locationConfig: { ...s.locationConfig, [field]: [...existing, v] } };
+    });
+  }
+
+  function removeTag(field: "countries" | "cities", value: string) {
+    setSettings((s) => ({
+      ...s,
+      locationConfig: {
+        ...s.locationConfig,
+        [field]: s.locationConfig[field].filter((x) => x !== value),
+      },
+    }));
+  }
+
+  function handleTagKey(
+    e: KeyboardEvent<HTMLInputElement>,
+    field: "countries" | "cities",
+    inputValue: string,
+    setInput: (v: string) => void
+  ) {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      addTag(field, inputValue);
+      setInput("");
+    } else if (e.key === "Backspace" && !inputValue) {
+      const list = settings.locationConfig[field];
+      if (list.length > 0) removeTag(field, list[list.length - 1]);
+    }
   }
 
   async function handleParseJD() {
@@ -390,7 +441,7 @@ export function SearchForm({ onSearch, loading }: Props) {
         </button>
       </div>
 
-      {/* Sources + filters row */}
+      {/* ── Sources + Language row ─────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Sources:</span>
@@ -409,32 +460,116 @@ export function SearchForm({ onSearch, loading }: Props) {
           ))}
         </div>
 
-        <div className="flex items-center gap-2 ml-auto">
-          <input
-            type="text"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            placeholder="Location 1"
-            className="field !w-28 !py-1.5"
-            disabled={loading}
-          />
-          <input
-            type="text"
-            value={settings.location2}
-            onChange={(e) => setSettings((s) => ({ ...s, location2: e.target.value }))}
-            placeholder="Location 2"
-            className="field !w-28 !py-1.5"
-            disabled={loading}
-          />
+        <div className="ml-auto">
           <input
             type="text"
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
-            placeholder="Language"
-            className="field !w-28 !py-1.5"
+            placeholder="Language (e.g. Rust)"
+            className="field !w-40 !py-1.5"
             disabled={loading}
           />
         </div>
+      </div>
+
+      {/* ── Location ───────────────────────────────────────────────────── */}
+      <div className="space-y-3 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
+        <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Location</p>
+
+        {/* Region pills — required */}
+        <div>
+          <p className="text-xs text-slate-500 dark:text-slate-500 mb-1.5">Region <span className="text-blue-500">*</span></p>
+          <div className="flex flex-wrap gap-2">
+            {REGIONS.map((r) => {
+              const active = settings.locationConfig.region === r.id;
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  disabled={loading}
+                  onClick={() =>
+                    setSettings((s) => ({
+                      ...s,
+                      locationConfig: { ...s.locationConfig, region: r.id },
+                    }))
+                  }
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                    active
+                      ? "bg-blue-600 dark:bg-blue-500 text-white border-blue-600 dark:border-blue-500 shadow-sm"
+                      : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400"
+                  }`}
+                >
+                  <span>{r.icon}</span>
+                  {r.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Countries tag input — optional */}
+        <div>
+          <p className="text-xs text-slate-500 dark:text-slate-500 mb-1.5">
+            Countries <span className="text-slate-400 dark:text-slate-600">(optional — press Enter to add)</span>
+          </p>
+          <div className="flex flex-wrap items-center gap-1.5 min-h-[34px] px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 dark:focus-within:ring-blue-900 transition-all">
+            {settings.locationConfig.countries.map((c) => (
+              <span key={c} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700 text-xs font-medium">
+                {c}
+                <button type="button" onClick={() => removeTag("countries", c)} className="text-blue-400 hover:text-blue-700 dark:hover:text-blue-200 transition-colors">×</button>
+              </span>
+            ))}
+            <input
+              type="text"
+              value={countryInput}
+              onChange={(e) => setCountryInput(e.target.value)}
+              onKeyDown={(e) => handleTagKey(e, "countries", countryInput, setCountryInput)}
+              onBlur={() => { addTag("countries", countryInput); setCountryInput(""); }}
+              placeholder={settings.locationConfig.countries.length === 0 ? "e.g. United States, Germany…" : ""}
+              className="flex-1 min-w-[120px] text-xs outline-none bg-transparent text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600"
+              disabled={loading}
+            />
+          </div>
+        </div>
+
+        {/* Cities tag input — optional */}
+        <div>
+          <p className="text-xs text-slate-500 dark:text-slate-500 mb-1.5">
+            Cities <span className="text-slate-400 dark:text-slate-600">(optional — press Enter to add)</span>
+          </p>
+          <div className="flex flex-wrap items-center gap-1.5 min-h-[34px] px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 dark:focus-within:ring-blue-900 transition-all">
+            {settings.locationConfig.cities.map((c) => (
+              <span key={c} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-violet-50 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-700 text-xs font-medium">
+                {c}
+                <button type="button" onClick={() => removeTag("cities", c)} className="text-violet-400 hover:text-violet-700 dark:hover:text-violet-200 transition-colors">×</button>
+              </span>
+            ))}
+            <input
+              type="text"
+              value={cityInput}
+              onChange={(e) => setCityInput(e.target.value)}
+              onKeyDown={(e) => handleTagKey(e, "cities", cityInput, setCityInput)}
+              onBlur={() => { addTag("cities", cityInput); setCityInput(""); }}
+              placeholder={settings.locationConfig.cities.length === 0 ? "e.g. New York, London, Singapore…" : ""}
+              className="flex-1 min-w-[120px] text-xs outline-none bg-transparent text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600"
+              disabled={loading}
+            />
+          </div>
+        </div>
+
+        {/* Location summary */}
+        {settings.locationConfig.region !== "global" && (
+          <p className="text-xs text-slate-500 dark:text-slate-500">
+            Searching:{" "}
+            <span className="text-slate-700 dark:text-slate-300 font-medium">
+              {settings.locationConfig.cities.length > 0
+                ? settings.locationConfig.cities.join(", ")
+                : settings.locationConfig.countries.length > 0
+                ? settings.locationConfig.countries.join(", ")
+                : `${REGIONS.find(r => r.id === settings.locationConfig.region)?.label} (top tech hubs)`}
+            </span>
+          </p>
+        )}
       </div>
 
       {/* Settings panel */}

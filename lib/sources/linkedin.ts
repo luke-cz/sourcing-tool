@@ -85,6 +85,48 @@ async function braveSearch(apiKey: string, query: string): Promise<BraveSearchRe
   return data.web?.results ?? [];
 }
 
+// Words that strongly indicate a non-person account (company/project/bot)
+const COMPANY_NAME_WORDS = /\b(blog|blogs|news|media|agency|group|solutions|consulting|protocol|dao|network|platform|exchange|capital|ventures|fund|collective|community|club|hub|studio|studios|global|worldwide|international|official)\b/i;
+
+/**
+ * Returns false if the search result looks like a company page, bot, or
+ * non-individual account rather than a real person.
+ */
+function isLikelyPerson(r: BraveSearchResult): boolean {
+  const { name, headline } = parseLinkedInTitle(r.title);
+
+  // ── Signal 1: circular headline ("X at X" where company ≈ name) ──────
+  if (headline) {
+    const atMatch = headline.match(/^(.+?)\s+at\s+(.+)$/i);
+    if (atMatch) {
+      const company = atMatch[2].trim();
+      // Normalise both sides: lowercase, strip spaces/hyphens
+      const norm = (s: string) => s.toLowerCase().replace(/[\s\-_.]/g, "");
+      const nName = norm(name);
+      const nComp = norm(company);
+      // Circular if one fully contains the other (handles "Defi Blogs" vs "DefiBlogs")
+      if (nComp.includes(nName) || nName.includes(nComp)) return false;
+    }
+  }
+
+  // ── Signal 2: bio opens with the name in third person ("X is a …") ───
+  const desc = (r.description ?? "").trim();
+  const normName = name.toLowerCase();
+  if (
+    desc.toLowerCase().startsWith(normName + " is ") ||
+    desc.toLowerCase().startsWith(normName + " are ") ||
+    desc.toLowerCase().startsWith(normName + " was ")
+  ) return false;
+
+  // ── Signal 3: name contains obvious non-person company words ──────────
+  if (COMPANY_NAME_WORDS.test(name)) return false;
+
+  // ── Signal 4: name is suspiciously long (> 5 words = likely a page title) ──
+  if (name.trim().split(/\s+/).length > 5) return false;
+
+  return true;
+}
+
 function resultToCandidate(r: BraveSearchResult, location?: string): Candidate {
   const { name, headline } = parseLinkedInTitle(r.title);
   const username = extractUsername(r.url);
@@ -145,6 +187,8 @@ export async function searchLinkedIn(params: SearchParams): Promise<Candidate[]>
 
   for (const r of [...pedigreeResults, ...skillResults]) {
     if (!r.url.includes("linkedin.com/in/")) continue;
+    // Drop company pages, bots and non-person accounts
+    if (!isLikelyPerson(r)) continue;
     const username = extractUsername(r.url);
     if (seen.has(username)) continue;
     seen.add(username);

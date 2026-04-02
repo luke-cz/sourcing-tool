@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { Candidate, SearchParams, SearchResponse, Source } from "@/lib/types";
+import type { Candidate, LocationConfig, SearchParams, SearchResponse, Source, WorldRegion } from "@/lib/types";
 import { searchGitHub } from "@/lib/sources/github";
 import { searchStackOverflow } from "@/lib/sources/stackoverflow";
 import { searchLinkedIn } from "@/lib/sources/linkedin";
@@ -12,15 +12,37 @@ const sourceFetchers: Record<Source, (params: SearchParams) => Promise<Candidate
   linkedin: searchLinkedIn,
 };
 
+// Representative search terms for each region (used when no countries/cities are specified)
+const REGION_FALLBACKS: Record<WorldRegion, string[]> = {
+  global:        [],
+  north_america: ["United States", "Canada"],
+  south_america: ["Brazil", "Argentina", "Colombia", "Chile", "Mexico"],
+  europe:        ["United Kingdom", "Germany", "Netherlands", "France", "Poland", "Sweden", "Spain"],
+  asia_pacific:  ["Singapore", "Australia", "India", "Japan", "South Korea", "Hong Kong"],
+  middle_east:   ["United Arab Emirates", "Israel", "Saudi Arabia"],
+  africa:        ["South Africa", "Nigeria", "Kenya", "Egypt"],
+};
+
+/**
+ * Returns an ordered list of location strings to search.
+ * Cities take priority, then countries, then region fallbacks.
+ * Empty array means "no location filter" (global).
+ */
+function buildLocationTargets(config: LocationConfig): string[] {
+  if (config.cities.length > 0) return config.cities;
+  if (config.countries.length > 0) return config.countries;
+  return REGION_FALLBACKS[config.region] ?? [];
+}
+
 export async function POST(req: NextRequest) {
-  let body: Partial<SearchParams>;
+  let body: Partial<SearchParams> & { settings?: SearchParams["settings"] };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { query, sources, location, location2, language, background, mustHaves, niceToHaves, minYears, settings } = body;
+  const { query, sources, language, background, mustHaves, niceToHaves, minYears, settings } = body;
 
   if (!query || typeof query !== "string" || !query.trim()) {
     return NextResponse.json({ error: "query is required" }, { status: 400 });
@@ -33,11 +55,16 @@ export async function POST(req: NextRequest) {
     ? sources
     : ["github", "stackoverflow"];
 
-  const params: SearchParams = {
+  // Derive location targets from locationConfig (or fall back to global if absent)
+  const locationConfig = settings?.locationConfig;
+  const locationTargets = locationConfig
+    ? buildLocationTargets(locationConfig)
+    : [];
+
+  // Base params (no location — will be injected per target)
+  const baseParams: SearchParams = {
     query: enrichedQuery,
     sources: activeSources,
-    location: typeof location === "string" ? location.trim() : undefined,
-    location2: typeof location2 === "string" ? location2.trim() : undefined,
     language: typeof language === "string" ? language.trim() : undefined,
     background: typeof background === "string" ? background.trim() : undefined,
     mustHaves: Array.isArray(mustHaves) ? mustHaves : undefined,
@@ -46,30 +73,30 @@ export async function POST(req: NextRequest) {
     settings,
   };
 
-  // If location2 is set, run search twice and merge
-  let results: PromiseSettledResult<Candidate[]>[];
+  // Run one full search per location target in parallel (or one global search if no targets)
+  const searchRuns = locationTargets.length > 0
+    ? locationTargets.map((loc) => ({ ...baseParams, location: loc }))
+    : [baseParams];
 
-  if (params.location2) {
-    const [r1, r2] = await Promise.all([
-      Promise.allSettled(activeSources.map((s) => sourceFetchers[s](params))),
-      Promise.allSettled(activeSources.map((s) => sourceFetchers[s]({ ...params, location: params.location2, location2: undefined }))),
-    ]);
-    results = [...r1, ...r2];
-  } else {
-    results = await Promise.allSettled(activeSources.map((s) => sourceFetchers[s](params)));
-  }
+  const runResults = await Promise.all(
+    searchRuns.map((runParams) =>
+      Promise.allSettled(activeSources.map((s) => sourceFetchers[s](runParams)))
+    )
+  );
+
+  // Flatten all settled results
+  const allResults = runResults.flat();
 
   const seen = new Set<string>();
   const candidates: Candidate[] = [];
   const errors: { source: Source; message: string }[] = [];
 
-  results.forEach((result, idx) => {
+  allResults.forEach((result, idx) => {
     const source = activeSources[idx % activeSources.length];
     if (result.status === "fulfilled") {
       result.value.forEach((c) => {
         if (!seen.has(c.id)) {
           seen.add(c.id);
-          // Re-apply tier detection with custom settings if provided
           if (settings?.tierCategories && settings?.tierMap) {
             const { tier, category } = detectTierWithCategory(
               c,
