@@ -24,11 +24,11 @@ async function fetchJson<T>(url: string): Promise<T> {
 }
 
 interface GHUserSearch {
-  items: { login: string; avatar_url: string; html_url: string }[];
+  items: { login: string; avatar_url: string; html_url: string; type: string }[];
 }
 
 interface GHRepoSearch {
-  items: { owner: { login: string; avatar_url: string; html_url: string } }[];
+  items: { owner: { login: string; avatar_url: string; html_url: string; type: string } }[];
 }
 
 interface GHUser {
@@ -43,6 +43,7 @@ interface GHUser {
   followers: number;
   twitter_username: string | null;
   blog: string | null;
+  type: string;
 }
 
 interface GHRepo {
@@ -75,7 +76,7 @@ function buildRepoQuery(params: SearchParams): string {
 }
 
 function buildUserQuery(params: SearchParams): string {
-  let q = params.query;
+  let q = params.query + " type:user";
   if (params.location) q += ` location:${params.location}`;
   if (params.language) q += ` language:${params.language}`;
   return q;
@@ -143,6 +144,8 @@ export async function searchGitHub(params: SearchParams): Promise<Candidate[]> {
 
   if (repoResult.status === "fulfilled") {
     repoResult.value.items.forEach((item) => {
+      // Skip org-owned repos — we want individual engineers only
+      if (item.owner.type !== "User") return;
       if (!seen.has(item.owner.login)) {
         seen.add(item.owner.login);
         logins.push(item.owner.login);
@@ -152,6 +155,8 @@ export async function searchGitHub(params: SearchParams): Promise<Candidate[]> {
 
   if (userResult.status === "fulfilled") {
     userResult.value.items.forEach((item) => {
+      // Extra safety: skip any orgs that slipped through
+      if (item.type !== "User") return;
       if (!seen.has(item.login)) {
         seen.add(item.login);
         logins.push(item.login);
@@ -164,5 +169,7 @@ export async function searchGitHub(params: SearchParams): Promise<Candidate[]> {
 
   return enriched
     .filter((r): r is PromiseFulfilledResult<{ user: GHUser; repos: GHRepo[] }> => r.status === "fulfilled")
+    // Final safety net: drop any account that resolved as an Organisation
+    .filter((r) => r.value.user.type === "User")
     .map((r) => toCandidate(r.value.user, r.value.repos));
 }

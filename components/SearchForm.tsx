@@ -17,6 +17,90 @@ const TIER_COLORS: Record<1 | 2, string> = {
   2: "bg-slate-50 border-slate-300 text-slate-700",
 };
 
+// ─── Market Focus presets ────────────────────────────────────────────────────
+type MarketId = "hft" | "defi" | "fintech" | "ai" | "bigtech";
+
+interface MarketPreset {
+  id: MarketId;
+  label: string;
+  icon: string;
+  background: string;
+  /** Which categories are active for this market */
+  categories: TierCategory[];
+  /** Override tier levels (categories not listed keep their default) */
+  tierOverrides: Partial<Record<TierCategory, TierLevel>>;
+}
+
+const MARKET_PRESETS: MarketPreset[] = [
+  {
+    id: "hft",
+    label: "HFT / Quant",
+    icon: "📈",
+    background: "High Frequency Trading / Quantitative Finance",
+    categories: ["hft_quant", "faang", "big_tech", "top_ai"],
+    tierOverrides: { hft_quant: 1, faang: 1, big_tech: 2, top_ai: 2 },
+  },
+  {
+    id: "defi",
+    label: "DeFi / Web3",
+    icon: "⛓️",
+    background: "DeFi / Web3 / Crypto",
+    categories: ["web3", "top_ai", "faang", "strong_startups"],
+    tierOverrides: { web3: 1, top_ai: 2, faang: 2, strong_startups: 2 },
+  },
+  {
+    id: "fintech",
+    label: "Fintech",
+    icon: "💳",
+    background: "Fintech / Payments",
+    categories: ["top_fintech", "faang", "big_tech", "web3"],
+    tierOverrides: { top_fintech: 1, faang: 1, big_tech: 2, web3: 2 },
+  },
+  {
+    id: "ai",
+    label: "AI / ML",
+    icon: "🤖",
+    background: "Artificial Intelligence / Machine Learning",
+    categories: ["top_ai", "faang", "big_tech", "strong_startups"],
+    tierOverrides: { top_ai: 1, faang: 1, big_tech: 2, strong_startups: 2 },
+  },
+  {
+    id: "bigtech",
+    label: "Big Tech",
+    icon: "🏢",
+    background: "Big Tech / Enterprise",
+    categories: ["faang", "big_tech", "top_ai", "strong_startups"],
+    tierOverrides: { faang: 1, big_tech: 1, top_ai: 2, strong_startups: 2 },
+  },
+];
+
+/** Merge selected market presets → active categories + tier map */
+function resolveMarketSettings(
+  selectedMarkets: Set<MarketId>,
+  baseMap: Record<TierCategory, TierLevel>
+): Pick<SearchSettings, "tierCategories" | "tierMap"> {
+  if (selectedMarkets.size === 0) {
+    return { tierCategories: [...ALL_CATEGORIES], tierMap: { ...baseMap } };
+  }
+  const activePresets = MARKET_PRESETS.filter((m) => selectedMarkets.has(m.id));
+  const categorySet = new Set<TierCategory>();
+  activePresets.forEach((p) => p.categories.forEach((c) => categorySet.add(c)));
+
+  // Merge tier overrides — if two markets disagree, take the lower (more generous) tier number
+  const tierMap: Record<TierCategory, TierLevel> = { ...baseMap };
+  for (const cat of Array.from(categorySet) as TierCategory[]) {
+    let best: TierLevel = null;
+    for (const preset of activePresets) {
+      if (!preset.categories.includes(cat)) continue;
+      const lvl = preset.tierOverrides[cat] ?? baseMap[cat];
+      if (lvl !== null && (best === null || lvl < best)) best = lvl;
+    }
+    tierMap[cat] = best;
+  }
+
+  return { tierCategories: Array.from(categorySet) as TierCategory[], tierMap };
+}
+
 interface Props {
   onSearch: (params: SearchParams, parsedJD?: ParsedJD) => void;
   loading: boolean;
@@ -46,6 +130,29 @@ export function SearchForm({ onSearch, loading }: Props) {
   const [parsingJD, setParsingJD] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
   const [settings, setSettings] = useState<SearchSettings>(defaultSettings());
+  const [selectedMarkets, setSelectedMarkets] = useState<Set<MarketId>>(new Set());
+
+  function toggleMarket(id: MarketId) {
+    setSelectedMarkets((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      // Recompute tier categories from the new selection
+      const resolved = resolveMarketSettings(next, DEFAULT_TIER_MAP);
+      setSettings((s) => ({ ...s, ...resolved }));
+      // Auto-fill background from market labels when background is empty or was auto-set
+      const labels = MARKET_PRESETS.filter((m) => next.has(m.id)).map((m) => m.background);
+      if (labels.length > 0) {
+        setBackground(labels.join(" · "));
+      } else {
+        setBackground("");
+      }
+      return next;
+    });
+  }
 
   function toggleSource(source: Source) {
     setSources((prev) => {
@@ -131,6 +238,54 @@ export function SearchForm({ onSearch, loading }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+
+      {/* ── Market Focus ─────────────────────────────────────────────────── */}
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">
+            Market focus
+          </span>
+          {selectedMarkets.size === 0 && (
+            <span className="text-xs text-gray-400">(all markets — select one or more to focus)</span>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {MARKET_PRESETS.map((market) => {
+            const active = selectedMarkets.has(market.id);
+            return (
+              <button
+                key={market.id}
+                type="button"
+                onClick={() => toggleMarket(market.id)}
+                disabled={loading}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                  active
+                    ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300 hover:text-indigo-600"
+                }`}
+              >
+                <span>{market.icon}</span>
+                {market.label}
+              </button>
+            );
+          })}
+          {selectedMarkets.size > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedMarkets(new Set());
+                setSettings((s) => ({ ...s, ...resolveMarketSettings(new Set(), DEFAULT_TIER_MAP) }));
+                setBackground("");
+              }}
+              disabled={loading}
+              className="px-3 py-1.5 rounded-full text-xs text-gray-400 border border-dashed border-gray-300 hover:border-gray-400 hover:text-gray-600 transition-colors"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Background */}
       <div className="flex gap-2 items-center">
         <label className="text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">
@@ -320,9 +475,16 @@ export function SearchForm({ onSearch, loading }: Props) {
 
             {/* Tier groups */}
             <div>
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
-                Company tiers — toggle groups & assign tier level
-              </p>
+              <div className="flex items-center gap-2 mb-2">
+                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                  Company tiers
+                </p>
+                {selectedMarkets.size > 0 && (
+                  <span className="text-xs text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-full px-2 py-0.5">
+                    Auto-configured by market focus
+                  </span>
+                )}
+              </div>
               <div className="space-y-2">
                 {ALL_CATEGORIES.map((cat) => {
                   const active = settings.tierCategories.includes(cat);
