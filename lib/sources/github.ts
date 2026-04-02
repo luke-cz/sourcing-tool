@@ -27,6 +27,10 @@ interface GHUserSearch {
   items: { login: string; avatar_url: string; html_url: string }[];
 }
 
+interface GHRepoSearch {
+  items: { owner: { login: string; avatar_url: string; html_url: string } }[];
+}
+
 interface GHUser {
   login: string;
   name: string | null;
@@ -50,7 +54,25 @@ interface GHRepo {
   topics: string[];
 }
 
-function buildQuery(params: SearchParams): string {
+// Build keywords for repo search — strips filler words, keeps technical terms
+function buildRepoQuery(params: SearchParams): string {
+  const stopWords = new Set([
+    "and", "or", "the", "a", "an", "in", "of", "for", "with", "to", "at",
+    "lead", "senior", "junior", "principal", "staff", "head", "chief",
+  ]);
+  const words = params.query
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((w) => w.length > 2 && !stopWords.has(w));
+
+  let q = words.slice(0, 4).join(" ");
+  if (params.language) q += ` language:${params.language}`;
+  // Boost repo quality signal
+  q += " stars:>5";
+  return q;
+}
+
+function buildUserQuery(params: SearchParams): string {
   let q = params.query;
   if (params.location) q += ` location:${params.location}`;
   if (params.language) q += ` language:${params.language}`;
@@ -103,13 +125,39 @@ function toCandidate(user: GHUser, repos: GHRepo[]): Candidate {
 }
 
 export async function searchGitHub(params: SearchParams): Promise<Candidate[]> {
-  const q = encodeURIComponent(buildQuery(params));
-  const searchUrl = `${BASE}/search/users?q=${q}&per_page=12&sort=followers`;
-  const searchResult = await fetchJson<GHUserSearch>(searchUrl);
+  // Run user search and repo-owner search in parallel
+  const userQ = encodeURIComponent(buildUserQuery(params));
+  const repoQ = encodeURIComponent(buildRepoQuery(params));
 
-  // Enrich top results (cap at 8 to stay within rate limits)
-  const logins = searchResult.items.slice(0, 8).map((u) => u.login);
-  const enriched = await Promise.allSettled(logins.map(enrichUser));
+  const [userResult, repoResult] = await Promise.allSettled([
+    fetchJson<GHUserSearch>(`${BASE}/search/users?q=${userQ}&per_page=8&sort=followers`),
+    fetchJson<GHRepoSearch>(`${BASE}/search/repositories?q=${repoQ}&per_page=10&sort=stars`),
+  ]);
+
+  // Collect unique logins, repo owners first (more relevant)
+  const seen = new Set<string>();
+  const logins: string[] = [];
+
+  if (repoResult.status === "fulfilled") {
+    repoResult.value.items.forEach((item) => {
+      if (!seen.has(item.owner.login)) {
+        seen.add(item.owner.login);
+        logins.push(item.owner.login);
+      }
+    });
+  }
+
+  if (userResult.status === "fulfilled") {
+    userResult.value.items.forEach((item) => {
+      if (!seen.has(item.login)) {
+        seen.add(item.login);
+        logins.push(item.login);
+      }
+    });
+  }
+
+  // Enrich top 10 unique profiles
+  const enriched = await Promise.allSettled(logins.slice(0, 10).map(enrichUser));
 
   return enriched
     .filter((r): r is PromiseFulfilledResult<{ user: GHUser; repos: GHRepo[] }> => r.status === "fulfilled")

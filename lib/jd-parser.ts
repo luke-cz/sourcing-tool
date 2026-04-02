@@ -28,7 +28,7 @@ Rules:
 - mustHaves: hard requirements, "required", "must have", "essential", minimum qualifications
 - niceToHaves: "preferred", "nice to have", "bonus", "plus", "ideally"
 - If not clearly categorized, lean toward mustHaves
-- searchQuery: 4-8 words, focus on the core role + top 2-3 skills
+- searchQuery: 3-5 specific technical keywords only, space-separated, NO boolean operators like AND/OR (e.g. "rust trading risk engine", "quant hft market-making"). No generic words like "developer", "engineer", "lead", "senior". Think about what this person would actually build or have in their GitHub repos/bio
 - Keep each requirement short (under 10 words)
 - Max 8 mustHaves, max 6 niceToHaves
 
