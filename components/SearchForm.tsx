@@ -242,11 +242,11 @@ export function SearchForm({ onSearch, loading }: Props) {
       {/* ── Market Focus ─────────────────────────────────────────────────── */}
       <div className="space-y-1.5">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">
+          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide whitespace-nowrap">
             Market focus
           </span>
           {selectedMarkets.size === 0 && (
-            <span className="text-xs text-gray-400">(all markets — select one or more to focus)</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500">(all markets — select one or more to focus)</span>
           )}
         </div>
         <div className="flex flex-wrap gap-2">
@@ -260,8 +260,8 @@ export function SearchForm({ onSearch, loading }: Props) {
                 disabled={loading}
                 className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium border transition-all ${
                   active
-                    ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
-                    : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300 hover:text-indigo-600"
+                    ? "bg-indigo-600 dark:bg-indigo-500 text-white border-indigo-600 dark:border-indigo-500 shadow-sm"
+                    : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-indigo-300 dark:hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400"
                 }`}
               >
                 <span>{market.icon}</span>
@@ -278,7 +278,7 @@ export function SearchForm({ onSearch, loading }: Props) {
                 setBackground("");
               }}
               disabled={loading}
-              className="px-3 py-1.5 rounded-full text-xs text-gray-400 border border-dashed border-gray-300 hover:border-gray-400 hover:text-gray-600 transition-colors"
+              className="px-3 py-1.5 rounded-full text-xs text-slate-400 dark:text-slate-500 border border-dashed border-slate-300 dark:border-slate-600 hover:border-slate-400 hover:text-slate-600 dark:hover:text-slate-400 transition-colors"
             >
               Clear
             </button>
@@ -288,7 +288,7 @@ export function SearchForm({ onSearch, loading }: Props) {
 
       {/* Background */}
       <div className="flex gap-2 items-center">
-        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">
+        <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide whitespace-nowrap">
           Background
         </label>
         <input
@@ -296,7 +296,7 @@ export function SearchForm({ onSearch, loading }: Props) {
           value={background}
           onChange={(e) => setBackground(e.target.value)}
           placeholder='e.g. "High Frequency Trading", "AI startup", "crypto exchange"'
-          className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="field"
           disabled={loading}
         />
       </div>
@@ -306,7 +306,7 @@ export function SearchForm({ onSearch, loading }: Props) {
         <button
           type="button"
           onClick={() => setShowJobSpec((v) => !v)}
-          className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+          className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium flex items-center gap-1"
         >
           <span>{showJobSpec ? "▾" : "▸"}</span>
           {showJobSpec ? "Hide job spec" : "Paste job spec"}
@@ -319,30 +319,30 @@ export function SearchForm({ onSearch, loading }: Props) {
               onChange={(e) => setJobSpec(e.target.value)}
               placeholder="Paste the full job description here…"
               rows={6}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none font-mono"
+              className="field resize-none font-mono"
               disabled={loading || parsingJD}
             />
             <button
               type="button"
               onClick={handleParseJD}
               disabled={!jobSpec.trim() || parsingJD || loading}
-              className="px-4 py-1.5 bg-gray-800 text-white text-sm font-medium rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-1.5 bg-slate-800 dark:bg-slate-700 text-white text-sm font-medium rounded-lg hover:bg-slate-700 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {parsingJD ? "Analyzing & searching…" : "Analyze & search"}
             </button>
-            {parseError && <p className="text-xs text-red-600">{parseError}</p>}
+            {parseError && <p className="text-xs text-red-500 dark:text-red-400">{parseError}</p>}
           </div>
         )}
       </div>
 
       {/* Parsed JD chips */}
       {parsedJD && (
-        <div className="space-y-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
+        <div className="space-y-2 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700">
           <div>
-            <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Must haves</span>
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Must haves</span>
             <div className="flex flex-wrap gap-1.5 mt-1">
               {parsedJD.mustHaves.map((req) => (
-                <span key={req} className="text-xs bg-blue-100 text-blue-800 border border-blue-200 rounded-full px-2.5 py-0.5 font-medium">
+                <span key={req} className="text-xs bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-700 rounded-full px-2.5 py-0.5 font-medium">
                   {req}
                 </span>
               ))}
@@ -350,10 +350,10 @@ export function SearchForm({ onSearch, loading }: Props) {
           </div>
           {parsedJD.niceToHaves.length > 0 && (
             <div>
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Nice to have</span>
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Nice to have</span>
               <div className="flex flex-wrap gap-1.5 mt-1">
                 {parsedJD.niceToHaves.map((req) => (
-                  <span key={req} className="text-xs bg-gray-100 text-gray-600 border border-gray-200 rounded-full px-2.5 py-0.5">
+                  <span key={req} className="text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600 rounded-full px-2.5 py-0.5">
                     {req}
                   </span>
                 ))}
@@ -370,13 +370,13 @@ export function SearchForm({ onSearch, loading }: Props) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={parsedJD ? parsedJD.searchQuery : 'e.g. "react developer" or "rust trading"'}
-          className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="field flex-1 !py-2.5 !px-4"
           disabled={loading}
         />
         <button
           type="submit"
           disabled={!canSearch}
-          className="px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white text-sm font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md"
         >
           {loading ? (
             <span className="flex items-center gap-2">
@@ -393,14 +393,14 @@ export function SearchForm({ onSearch, loading }: Props) {
       {/* Sources + filters row */}
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Sources:</span>
+          <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Sources:</span>
           {ALL_SOURCES.map(({ id, label }) => (
             <label
               key={id}
               className={`flex items-center gap-1.5 cursor-pointer px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
                 sources.has(id)
-                  ? "bg-blue-50 border-blue-300 text-blue-700"
-                  : "bg-white border-gray-200 text-gray-500 hover:border-gray-300"
+                  ? "bg-blue-50 dark:bg-blue-900/40 border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-300"
+                  : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-500"
               }`}
             >
               <input type="checkbox" className="sr-only" checked={sources.has(id)} onChange={() => toggleSource(id)} disabled={loading} />
@@ -415,7 +415,7 @@ export function SearchForm({ onSearch, loading }: Props) {
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="Location 1"
-            className="w-28 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="field !w-28 !py-1.5"
             disabled={loading}
           />
           <input
@@ -423,7 +423,7 @@ export function SearchForm({ onSearch, loading }: Props) {
             value={settings.location2}
             onChange={(e) => setSettings((s) => ({ ...s, location2: e.target.value }))}
             placeholder="Location 2"
-            className="w-28 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="field !w-28 !py-1.5"
             disabled={loading}
           />
           <input
@@ -431,7 +431,7 @@ export function SearchForm({ onSearch, loading }: Props) {
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
             placeholder="Language"
-            className="w-28 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="field !w-28 !py-1.5"
             disabled={loading}
           />
         </div>
@@ -442,20 +442,20 @@ export function SearchForm({ onSearch, loading }: Props) {
         <button
           type="button"
           onClick={() => setShowSettings((v) => !v)}
-          className="text-sm text-gray-500 hover:text-gray-700 font-medium flex items-center gap-1"
+          className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-medium flex items-center gap-1 transition-colors"
         >
           <span>{showSettings ? "▾" : "▸"}</span>
           Search settings
         </button>
 
         {showSettings && (
-          <div className="mt-3 space-y-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+          <div className="mt-3 space-y-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
             {/* Years of experience */}
-            <div className="flex items-center gap-3">
-              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">
-                Min. years exp.
+            <div className="flex items-center gap-3 flex-wrap">
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide whitespace-nowrap">
+                Min. experience
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 {[null, 2, 3, 5, 7, 10].map((yr) => (
                   <button
                     key={String(yr)}
@@ -464,7 +464,7 @@ export function SearchForm({ onSearch, loading }: Props) {
                     className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
                       settings.minYears === yr
                         ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+                        : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-500"
                     }`}
                   >
                     {yr === null ? "Any" : `${yr}+`}
@@ -475,36 +475,34 @@ export function SearchForm({ onSearch, loading }: Props) {
 
             {/* Tier groups */}
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+              <div className="flex items-center gap-2 mb-2.5 flex-wrap">
+                <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">
                   Company tiers
                 </p>
                 {selectedMarkets.size > 0 && (
-                  <span className="text-xs text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-full px-2 py-0.5">
+                  <span className="text-xs text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-700 rounded-full px-2 py-0.5">
                     Auto-configured by market focus
                   </span>
                 )}
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {ALL_CATEGORIES.map((cat) => {
                   const active = settings.tierCategories.includes(cat);
                   const currentLevel = settings.tierMap[cat];
                   return (
                     <div key={cat} className="flex items-center gap-3">
-                      {/* Toggle group on/off */}
                       <button
                         type="button"
                         onClick={() => toggleCategory(cat)}
                         className={`w-36 text-left px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                           active
-                            ? "bg-gray-800 text-white border-gray-800"
-                            : "bg-white text-gray-400 border-gray-200"
+                            ? "bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 border-slate-800 dark:border-slate-200"
+                            : "bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-600"
                         }`}
                       >
                         {TIER_CATEGORY_LABELS[cat]}
                       </button>
 
-                      {/* Tier level selector */}
                       {active && (
                         <div className="flex items-center gap-1">
                           {([1, 2] as TierLevel[]).map((lvl) => (
@@ -515,7 +513,7 @@ export function SearchForm({ onSearch, loading }: Props) {
                               className={`px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors ${
                                 currentLevel === lvl
                                   ? TIER_COLORS[lvl as 1 | 2]
-                                  : "bg-white border-gray-200 text-gray-400"
+                                  : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-400 dark:text-slate-500"
                               }`}
                             >
                               Tier {lvl}
