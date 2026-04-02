@@ -55,9 +55,22 @@ export function SearchForm({ onSearch, loading }: Props) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to parse");
-      setParsedJD(data as ParsedJD);
-      // Auto-fill query from parsed JD
-      if (data.searchQuery) setQuery(data.searchQuery);
+      const parsed = data as ParsedJD;
+      setParsedJD(parsed);
+      if (parsed.searchQuery) setQuery(parsed.searchQuery);
+      // Auto-trigger search with AI-generated query
+      onSearch(
+        {
+          query: parsed.searchQuery,
+          sources: Array.from(sources),
+          location: location.trim() || undefined,
+          language: language.trim() || undefined,
+          background: background.trim() || undefined,
+          mustHaves: parsed.mustHaves,
+          niceToHaves: parsed.niceToHaves,
+        },
+        parsed
+      );
     } catch (err) {
       setParseError(err instanceof Error ? err.message : "Failed to parse job spec");
     } finally {
@@ -130,7 +143,7 @@ export function SearchForm({ onSearch, loading }: Props) {
               disabled={!jobSpec.trim() || parsingJD || loading}
               className="px-4 py-1.5 bg-gray-800 text-white text-sm font-medium rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {parsingJD ? "Analyzing…" : "Analyze requirements"}
+              {parsingJD ? "Analyzing & searching…" : "Analyze & search"}
             </button>
             {parseError && (
               <p className="text-xs text-red-600">{parseError}</p>
