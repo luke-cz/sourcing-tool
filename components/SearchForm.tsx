@@ -73,7 +73,7 @@ export function SearchForm({ onSearch, loading }: Props) {
     onSearch(
       {
         query: effectiveQuery,
-        sources: [...sources],
+        sources: Array.from(sources),
         location: location.trim() || undefined,
         language: language.trim() || undefined,
         background: background.trim() || undefined,
