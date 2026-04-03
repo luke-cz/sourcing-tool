@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import type { Candidate, Source, SearchResponse, CVLibraryEntry } from "@/lib/types";
+import type { Candidate, Source, SearchResponse } from "@/lib/types";
 import { CandidateCard } from "@/components/CandidateCard";
 import { CandidateRow } from "@/components/CandidateRow";
-import { CVLibraryTab } from "@/components/CVLibraryTab";
 
 interface Props {
   response: SearchResponse;
@@ -16,9 +15,6 @@ interface Props {
   niceToHaves?: string[];
   background?: string;
   minYears?: number | null;
-  cvs: CVLibraryEntry[];
-  onCVUpload: (entry: CVLibraryEntry) => void;
-  onCVRemove: (id: string) => void;
 }
 
 const SOURCE_LABELS: Record<Source, string> = {
@@ -35,7 +31,7 @@ const SOURCE_COLORS: Record<Source, string> = {
   cv: "bg-violet-600 text-white",
 };
 
-type Tab = "results" | "shortlist" | "cv_library";
+type Tab = "results" | "shortlist";
 type ViewMode = "grid" | "list";
 type SortKey = "default" | "followers";
 type TierFilter = "all" | "1" | "2" | "none";
@@ -62,7 +58,7 @@ function exportCSV(candidates: Candidate[]) {
   URL.revokeObjectURL(url);
 }
 
-export function ResultsGrid({ response, shortlist, isSaved, onToggleSave, onSelectCandidate, mustHaves, niceToHaves, background, minYears, cvs, onCVUpload, onCVRemove }: Props) {
+export function ResultsGrid({ response, shortlist, isSaved, onToggleSave, onSelectCandidate, mustHaves, background, minYears }: Props) {
   const { candidates, errors } = response;
 
   const [tab, setTab] = useState<Tab>("results");
@@ -113,7 +109,6 @@ export function ResultsGrid({ response, shortlist, isSaved, onToggleSave, onSele
         {([
           { key: "results", label: "Results", count: candidates.length },
           { key: "shortlist", label: "Shortlist", count: shortlist.length },
-          { key: "cv_library", label: "CV Library", count: cvs.length },
         ] as { key: Tab; label: string; count: number }[]).map(({ key, label, count }) => (
           <button
             key={key}
@@ -161,7 +156,7 @@ export function ResultsGrid({ response, shortlist, isSaved, onToggleSave, onSele
             All
           </button>
 
-          {/* Source pills — click to filter */}
+          {/* Source pills */}
           {(Object.entries(countsBySource) as [Source, number][]).map(([src, n]) => {
             const active = sourceFilter === src;
             return (
@@ -179,7 +174,7 @@ export function ResultsGrid({ response, shortlist, isSaved, onToggleSave, onSele
             );
           })}
 
-          {/* Tier pills — click to filter */}
+          {/* Tier pills */}
           {tier1Count > 0 && (
             <button
               onClick={() => setTierFilter(tierFilter === "1" ? "all" : "1")}
@@ -201,7 +196,7 @@ export function ResultsGrid({ response, shortlist, isSaved, onToggleSave, onSele
             </button>
           )}
 
-          {/* Right side: sort + view toggle + export */}
+          {/* Right: sort + view toggle + export */}
           <div className="flex items-center gap-2 ml-auto">
             <select
               value={sort}
@@ -254,18 +249,6 @@ export function ResultsGrid({ response, shortlist, isSaved, onToggleSave, onSele
         </div>
       )}
 
-      {/* ── CV Library tab ── */}
-      {tab === "cv_library" && (
-        <CVLibraryTab
-          cvs={cvs}
-          onUpload={onCVUpload}
-          onRemove={onCVRemove}
-          mustHaves={mustHaves}
-          niceToHaves={niceToHaves}
-          background={background}
-        />
-      )}
-
       {/* ── Empty shortlist ── */}
       {tab === "shortlist" && shortlist.length === 0 && (
         <div className="text-center py-16 text-slate-400 dark:text-slate-600">
@@ -276,10 +259,10 @@ export function ResultsGrid({ response, shortlist, isSaved, onToggleSave, onSele
         </div>
       )}
 
-      {/* ── Candidates (results + shortlist tabs) ── */}
-      {tab !== "cv_library" && filtered.length > 0 && (
+      {/* ── Candidates ── */}
+      {filtered.length > 0 && (
         view === "grid" ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {filtered.map((c) => (
               <CandidateCard key={c.id} candidate={c} mustHaves={mustHaves} background={background}
                 minYears={minYears} isSaved={isSaved(c.id)} onToggleSave={onToggleSave} onSelect={onSelectCandidate} />
@@ -295,7 +278,7 @@ export function ResultsGrid({ response, shortlist, isSaved, onToggleSave, onSele
       )}
 
       {/* ── No results after filtering ── */}
-      {tab !== "cv_library" && filtered.length === 0 && (tab === "results" ? candidates.length > 0 : shortlist.length > 0) && (
+      {filtered.length === 0 && (tab === "results" ? candidates.length > 0 : shortlist.length > 0) && (
         <p className="text-center py-10 text-sm text-slate-400 dark:text-slate-600">No candidates match the current filters</p>
       )}
     </div>

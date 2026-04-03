@@ -1,9 +1,12 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
-  "/api/match-cvs/route": "app/api/match-cvs/route.js",
-  "/api/summarize/route": "app/api/summarize/route.js",
+  "/api/auth/login/route": "app/api/auth/login/route.js",
   "/api/parse-cv/route": "app/api/parse-cv/route.js",
+  "/api/auth/logout/route": "app/api/auth/logout/route.js",
+  "/login/page": "app/login/page.js",
+  "/page": "app/page.js",
   "/api/parse-jd/route": "app/api/parse-jd/route.js",
   "/api/search/route": "app/api/search/route.js",
-  "/page": "app/page.js"
+  "/api/match-cvs/route": "app/api/match-cvs/route.js",
+  "/api/summarize/route": "app/api/summarize/route.js"
 }
