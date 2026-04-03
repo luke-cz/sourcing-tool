@@ -1,33 +1,41 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import type { Candidate, Source, SearchResponse } from "@/lib/types";
+import type { Candidate, Source, SearchResponse, CVLibraryEntry } from "@/lib/types";
 import { CandidateCard } from "@/components/CandidateCard";
 import { CandidateRow } from "@/components/CandidateRow";
+import { CVLibraryTab } from "@/components/CVLibraryTab";
 
 interface Props {
   response: SearchResponse;
   shortlist: Candidate[];
   isSaved: (id: string) => boolean;
   onToggleSave: (c: Candidate) => void;
+  onSelectCandidate?: (c: Candidate) => void;
   mustHaves?: string[];
+  niceToHaves?: string[];
   background?: string;
   minYears?: number | null;
+  cvs: CVLibraryEntry[];
+  onCVUpload: (entry: CVLibraryEntry) => void;
+  onCVRemove: (id: string) => void;
 }
 
 const SOURCE_LABELS: Record<Source, string> = {
   github: "GitHub",
   stackoverflow: "Stack Overflow",
   linkedin: "LinkedIn",
+  cv: "CV",
 };
 
 const SOURCE_COLORS: Record<Source, string> = {
   github: "bg-slate-800 dark:bg-slate-700 text-white",
   stackoverflow: "bg-amber-500 text-white",
   linkedin: "bg-blue-600 text-white",
+  cv: "bg-violet-600 text-white",
 };
 
-type Tab = "results" | "shortlist";
+type Tab = "results" | "shortlist" | "cv_library";
 type ViewMode = "grid" | "list";
 type SortKey = "default" | "followers";
 type TierFilter = "all" | "1" | "2" | "none";
@@ -54,7 +62,7 @@ function exportCSV(candidates: Candidate[]) {
   URL.revokeObjectURL(url);
 }
 
-export function ResultsGrid({ response, shortlist, isSaved, onToggleSave, mustHaves, background, minYears }: Props) {
+export function ResultsGrid({ response, shortlist, isSaved, onToggleSave, onSelectCandidate, mustHaves, niceToHaves, background, minYears, cvs, onCVUpload, onCVRemove }: Props) {
   const { candidates, errors } = response;
 
   const [tab, setTab] = useState<Tab>("results");
@@ -102,29 +110,30 @@ export function ResultsGrid({ response, shortlist, isSaved, onToggleSave, mustHa
 
       {/* ── Tabs ── */}
       <div className="flex items-center gap-1 border-b border-slate-200 dark:border-slate-800">
-        {(["results", "shortlist"] as Tab[]).map((t) => {
-          const count = t === "results" ? candidates.length : shortlist.length;
-          return (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-1.5 ${
-                tab === t
-                  ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
-                  : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
-              }`}
-            >
-              {t === "results" ? "Results" : "Shortlist"}
-              <span className={`text-xs rounded-full px-1.5 py-0.5 font-semibold ${
-                tab === t
-                  ? "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-500"
-              }`}>
-                {count}
-              </span>
-            </button>
-          );
-        })}
+        {([
+          { key: "results", label: "Results", count: candidates.length },
+          { key: "shortlist", label: "Shortlist", count: shortlist.length },
+          { key: "cv_library", label: "CV Library", count: cvs.length },
+        ] as { key: Tab; label: string; count: number }[]).map(({ key, label, count }) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-1.5 ${
+              tab === key
+                ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
+                : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+            }`}
+          >
+            {label}
+            <span className={`text-xs rounded-full px-1.5 py-0.5 font-semibold ${
+              tab === key
+                ? "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-500"
+            }`}>
+              {count}
+            </span>
+          </button>
+        ))}
       </div>
 
       {/* ── Single control bar: count + clickable filter pills + sort + view + export ── */}
@@ -245,6 +254,18 @@ export function ResultsGrid({ response, shortlist, isSaved, onToggleSave, mustHa
         </div>
       )}
 
+      {/* ── CV Library tab ── */}
+      {tab === "cv_library" && (
+        <CVLibraryTab
+          cvs={cvs}
+          onUpload={onCVUpload}
+          onRemove={onCVRemove}
+          mustHaves={mustHaves}
+          niceToHaves={niceToHaves}
+          background={background}
+        />
+      )}
+
       {/* ── Empty shortlist ── */}
       {tab === "shortlist" && shortlist.length === 0 && (
         <div className="text-center py-16 text-slate-400 dark:text-slate-600">
@@ -255,26 +276,26 @@ export function ResultsGrid({ response, shortlist, isSaved, onToggleSave, mustHa
         </div>
       )}
 
-      {/* ── Candidates ── */}
-      {filtered.length > 0 && (
+      {/* ── Candidates (results + shortlist tabs) ── */}
+      {tab !== "cv_library" && filtered.length > 0 && (
         view === "grid" ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filtered.map((c) => (
               <CandidateCard key={c.id} candidate={c} mustHaves={mustHaves} background={background}
-                minYears={minYears} isSaved={isSaved(c.id)} onToggleSave={onToggleSave} />
+                minYears={minYears} isSaved={isSaved(c.id)} onToggleSave={onToggleSave} onSelect={onSelectCandidate} />
             ))}
           </div>
         ) : (
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
             {filtered.map((c) => (
-              <CandidateRow key={c.id} candidate={c} isSaved={isSaved(c.id)} onToggleSave={onToggleSave} />
+              <CandidateRow key={c.id} candidate={c} isSaved={isSaved(c.id)} onToggleSave={onToggleSave} onSelect={onSelectCandidate} />
             ))}
           </div>
         )
       )}
 
       {/* ── No results after filtering ── */}
-      {filtered.length === 0 && (tab === "results" ? candidates.length > 0 : shortlist.length > 0) && (
+      {tab !== "cv_library" && filtered.length === 0 && (tab === "results" ? candidates.length > 0 : shortlist.length > 0) && (
         <p className="text-center py-10 text-sm text-slate-400 dark:text-slate-600">No candidates match the current filters</p>
       )}
     </div>

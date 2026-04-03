@@ -6,10 +6,11 @@ import { searchLinkedIn } from "@/lib/sources/linkedin";
 import { detectTierWithCategory } from "@/lib/tiers";
 import type { TierCategory } from "@/lib/tiers";
 
-const sourceFetchers: Record<Source, (params: SearchParams) => Promise<Candidate[]>> = {
+const sourceFetchers: Partial<Record<Source, (params: SearchParams) => Promise<Candidate[]>>> = {
   github: searchGitHub,
   stackoverflow: searchStackOverflow,
   linkedin: searchLinkedIn,
+  // "cv" source is handled client-side via the CV Library, not via this API
 };
 
 // Representative search terms for each region (used when no countries/cities are specified)
@@ -89,7 +90,7 @@ export async function POST(req: NextRequest) {
 
   const runResults = await Promise.all(
     searchRuns.map((runParams) =>
-      Promise.allSettled(activeSources.map((s) => sourceFetchers[s](runParams)))
+      Promise.allSettled(activeSources.filter((s) => sourceFetchers[s]).map((s) => sourceFetchers[s]!(runParams)))
     )
   );
 

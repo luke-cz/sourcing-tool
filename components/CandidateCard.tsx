@@ -13,9 +13,10 @@ interface Props {
   minYears?: number | null;
   isSaved?: boolean;
   onToggleSave?: (c: Candidate) => void;
+  onSelect?: (c: Candidate) => void;
 }
 
-export function CandidateCard({ candidate, mustHaves, background, minYears, isSaved = false, onToggleSave }: Props) {
+export function CandidateCard({ candidate, mustHaves, background, minYears, isSaved = false, onToggleSave, onSelect }: Props) {
   const [summary, setSummary] = useState<string | null>(candidate.summary);
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [summaryError, setSummaryError] = useState(false);
@@ -41,7 +42,10 @@ export function CandidateCard({ candidate, mustHaves, background, minYears, isSa
   const displayName = candidate.name ?? candidate.username;
 
   return (
-    <div className="candidate-card p-5 flex flex-col gap-3">
+    <div
+      className={`candidate-card p-5 flex flex-col gap-3 ${onSelect ? "cursor-pointer" : ""}`}
+      onClick={() => onSelect?.(candidate)}
+    >
 
       {/* ── Header ── */}
       <div className="flex items-start gap-3">
@@ -77,7 +81,7 @@ export function CandidateCard({ candidate, mustHaves, background, minYears, isSa
               <TierBadge tier={candidate.tier} category={candidate.tierCategory} />
               {onToggleSave && (
                 <button
-                  onClick={() => onToggleSave(candidate)}
+                  onClick={(e) => { e.stopPropagation(); onToggleSave(candidate); }}
                   title={isSaved ? "Remove from shortlist" : "Save to shortlist"}
                   className={`p-1 rounded-md transition-colors ${
                     isSaved
@@ -213,6 +217,7 @@ export function CandidateCard({ candidate, mustHaves, background, minYears, isSa
         href={candidate.profileUrl}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
         className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors group"
       >
         View profile

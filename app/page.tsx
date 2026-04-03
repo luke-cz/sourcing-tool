@@ -4,11 +4,15 @@ import { useState } from "react";
 import { SearchForm } from "@/components/SearchForm";
 import { ResultsGrid } from "@/components/ResultsGrid";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { CandidateDetailPanel } from "@/components/CandidateDetailPanel";
+import { CVLibraryTab } from "@/components/CVLibraryTab";
 import { useShortlist } from "@/hooks/useShortlist";
-import type { ParsedJD, SearchParams, SearchResponse } from "@/lib/types";
+import { useCVLibrary } from "@/hooks/useCVLibrary";
+import type { Candidate, ParsedJD, SearchParams, SearchResponse } from "@/lib/types";
 
 interface SearchContext {
   mustHaves?: string[];
+  niceToHaves?: string[];
   background?: string;
   minYears?: number | null;
 }
@@ -19,7 +23,9 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchCollapsed, setSearchCollapsed] = useState(false);
+  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const { shortlist, isSaved, toggle: toggleShortlist } = useShortlist();
+  const { cvs, addCV, removeCV } = useCVLibrary();
 
   async function handleSearch(params: SearchParams & { background?: string }, parsedJD?: ParsedJD) {
     setLoading(true);
@@ -27,6 +33,7 @@ export default function Home() {
     setResponse(null);
     setContext({
       mustHaves: parsedJD?.mustHaves,
+      niceToHaves: parsedJD?.niceToHaves,
       background: params.background,
       minYears: params.minYears,
     });
@@ -167,27 +174,68 @@ export default function Home() {
               shortlist={shortlist}
               isSaved={isSaved}
               onToggleSave={toggleShortlist}
+              onSelectCandidate={setSelectedCandidate}
               mustHaves={context.mustHaves}
+              niceToHaves={context.niceToHaves}
               background={context.background}
               minYears={context.minYears}
+              cvs={cvs}
+              onCVUpload={addCV}
+              onCVRemove={removeCV}
             />
           </div>
         )}
 
         {!loading && !response && !error && (
-          <div className="flex flex-col items-center justify-center py-24 gap-4 animate-fade-in">
-            <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-              <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+          <div className="space-y-8 animate-fade-in">
+            <div className="flex flex-col items-center justify-center py-12 gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <div className="text-center">
+                <p className="text-slate-700 dark:text-slate-300 font-semibold">Ready to search</p>
+                <p className="text-slate-500 dark:text-slate-500 text-sm mt-1">Pick a market, set a location, and run a search</p>
+              </div>
             </div>
-            <div className="text-center">
-              <p className="text-slate-700 dark:text-slate-300 font-semibold">Ready to search</p>
-              <p className="text-slate-500 dark:text-slate-500 text-sm mt-1">Pick a market, set a location, and run a search</p>
+            {/* CV Library always accessible */}
+            <div>
+              <h2 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
+                <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                CV Library
+                {cvs.length > 0 && (
+                  <span className="text-xs font-semibold bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-full px-2 py-0.5">
+                    {cvs.length}
+                  </span>
+                )}
+              </h2>
+              <CVLibraryTab
+                cvs={cvs}
+                onUpload={addCV}
+                onRemove={removeCV}
+                mustHaves={context.mustHaves}
+                niceToHaves={context.niceToHaves}
+                background={context.background}
+              />
             </div>
           </div>
         )}
       </div>
+      {/* ── Candidate detail panel ── */}
+      {selectedCandidate && (
+        <CandidateDetailPanel
+          candidate={selectedCandidate}
+          onClose={() => setSelectedCandidate(null)}
+          isSaved={isSaved(selectedCandidate.id)}
+          onToggleSave={toggleShortlist}
+          mustHaves={context.mustHaves}
+          background={context.background}
+          minYears={context.minYears}
+        />
+      )}
     </div>
   );
 }

@@ -9,13 +9,17 @@ interface Props {
   candidate: Candidate;
   isSaved: boolean;
   onToggleSave: (c: Candidate) => void;
+  onSelect?: (c: Candidate) => void;
 }
 
-export function CandidateRow({ candidate, isSaved, onToggleSave }: Props) {
+export function CandidateRow({ candidate, isSaved, onToggleSave, onSelect }: Props) {
   const displayName = candidate.name ?? candidate.username;
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
+    <div
+      className={`flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group ${onSelect ? "cursor-pointer" : ""}`}
+      onClick={() => onSelect?.(candidate)}
+    >
 
       {/* Avatar */}
       <div className="shrink-0">
@@ -63,7 +67,7 @@ export function CandidateRow({ candidate, isSaved, onToggleSave }: Props) {
       {/* Actions */}
       <div className="flex items-center gap-2 shrink-0 ml-auto">
         <button
-          onClick={() => onToggleSave(candidate)}
+          onClick={(e) => { e.stopPropagation(); onToggleSave(candidate); }}
           title={isSaved ? "Remove from shortlist" : "Add to shortlist"}
           className={`p-1.5 rounded-md transition-colors ${
             isSaved
@@ -77,6 +81,7 @@ export function CandidateRow({ candidate, isSaved, onToggleSave }: Props) {
           href={candidate.profileUrl}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
           className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium opacity-0 group-hover:opacity-100 transition-opacity"
         >
           View →

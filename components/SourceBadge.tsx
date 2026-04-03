@@ -15,6 +15,10 @@ const config: Record<Source, { label: string; className: string }> = {
     label: "Stack Overflow",
     className: "bg-amber-500 text-white",
   },
+  cv: {
+    label: "CV",
+    className: "bg-violet-600 text-white",
+  },
 };
 
 export function SourceBadge({ source }: { source: Source }) {

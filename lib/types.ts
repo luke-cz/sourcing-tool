@@ -1,4 +1,4 @@
-export type Source = "github" | "linkedin" | "stackoverflow";
+export type Source = "github" | "linkedin" | "stackoverflow" | "cv";
 
 export type TierLevel = 1 | 2 | null;
 
@@ -85,4 +85,46 @@ export interface SearchParams {
 export interface SearchResponse {
   candidates: Candidate[];
   errors: { source: Source; message: string }[];
+}
+
+// ─── CV Library ────────────────────────────────────────────────────────────
+export interface ExperienceEntry {
+  title: string;
+  company: string;
+  duration: string | null;
+  description: string | null;
+}
+
+export interface ParsedCV {
+  name: string | null;
+  headline: string | null;
+  location: string | null;
+  email: string | null;
+  skills: string[];
+  experience: ExperienceEntry[];
+  education: string[];
+  languages: string[];
+  summary: string | null;
+  rawText: string;
+}
+
+export interface CVLibraryEntry {
+  id: string;
+  fileName: string;
+  uploadedAt: string;   // ISO date
+  parsed: ParsedCV;
+}
+
+export interface CVMatch {
+  cvId: string;
+  score: number;          // 0–100
+  strengths: string[];
+  gaps: string[];
+  summary: string;
+}
+
+export interface CandidateNote {
+  candidateId: string;
+  text: string;
+  updatedAt: string;      // ISO date
 }
