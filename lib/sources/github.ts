@@ -76,7 +76,7 @@ function buildRepoQuery(params: SearchParams): string {
 }
 
 function buildUserQuery(params: SearchParams): string {
-  let q = params.query + " type:user";
+  let q = params.query + " type:user followers:>100";
   if (params.location) q += ` location:${params.location}`;
   if (params.language) q += ` language:${params.language}`;
   return q;

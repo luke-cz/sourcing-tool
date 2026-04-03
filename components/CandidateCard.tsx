@@ -11,9 +11,11 @@ interface Props {
   mustHaves?: string[];
   background?: string;
   minYears?: number | null;
+  isSaved?: boolean;
+  onToggleSave?: (c: Candidate) => void;
 }
 
-export function CandidateCard({ candidate, mustHaves, background, minYears }: Props) {
+export function CandidateCard({ candidate, mustHaves, background, minYears, isSaved = false, onToggleSave }: Props) {
   const [summary, setSummary] = useState<string | null>(candidate.summary);
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [summaryError, setSummaryError] = useState(false);
@@ -71,7 +73,30 @@ export function CandidateCard({ candidate, mustHaves, background, minYears }: Pr
             <span className="font-semibold text-slate-900 dark:text-slate-100 truncate leading-tight">
               {displayName}
             </span>
-            <TierBadge tier={candidate.tier} category={candidate.tierCategory} />
+            <div className="flex items-center gap-1.5 shrink-0">
+              <TierBadge tier={candidate.tier} category={candidate.tierCategory} />
+              {onToggleSave && (
+                <button
+                  onClick={() => onToggleSave(candidate)}
+                  title={isSaved ? "Remove from shortlist" : "Save to shortlist"}
+                  className={`p-1 rounded-md transition-colors ${
+                    isSaved
+                      ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30"
+                      : "text-slate-300 dark:text-slate-600 hover:text-blue-500 dark:hover:text-blue-400"
+                  }`}
+                >
+                  {isSaved ? (
+                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M5 4a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 20V4z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 4a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 20V4z" />
+                    </svg>
+                  )}
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-2 mt-1 flex-wrap">

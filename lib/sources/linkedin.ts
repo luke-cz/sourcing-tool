@@ -160,10 +160,8 @@ export async function searchLinkedIn(params: SearchParams): Promise<Candidate[]>
   const skills = buildSkillKeywords(params.query);
   const locationSuffix = params.location ? ` ${params.location}` : "";
 
-  // Query 1: skill-based (existing approach)
-  const skillQuery = `site:linkedin.com/in ${params.query}${locationSuffix}`;
-
-  // Query 2+: company-pedigree boolean searches (batched, 25 companies per query)
+  // Pedigree-only: search by company name boolean clauses (batched, 25 per query)
+  // Keyword/skill search removed — it returned too much noise (company pages, job posts, bots)
   const activeCategories = (params.settings?.tierCategories ?? Object.keys({
     faang: 1, hft_quant: 1, big_tech: 2, top_ai: 1, top_fintech: 2, web3: 2, strong_startups: 2,
   })) as TierCategory[];
@@ -173,19 +171,15 @@ export async function searchLinkedIn(params: SearchParams): Promise<Candidate[]>
     (clause) => `site:linkedin.com/in ${clause} ${skills}${locationSuffix}`
   );
 
-  // Run skill query + all pedigree batches in parallel
-  const [skillResults, ...pedigreeBatches] = await Promise.all([
-    braveSearch(apiKey, skillQuery),
-    ...pedigreeQueries.map((q) => braveSearch(apiKey, q)),
-  ]);
+  if (pedigreeQueries.length === 0) return [];
 
+  const pedigreeBatches = await Promise.all(pedigreeQueries.map((q) => braveSearch(apiKey, q)));
   const pedigreeResults = pedigreeBatches.flat();
 
-  // Merge, deduplicate — pedigree results first (higher signal)
   const seen = new Set<string>();
   const all: Candidate[] = [];
 
-  for (const r of [...pedigreeResults, ...skillResults]) {
+  for (const r of pedigreeResults) {
     if (!r.url.includes("linkedin.com/in/")) continue;
     // Drop company pages, bots and non-person accounts
     if (!isLikelyPerson(r)) continue;
