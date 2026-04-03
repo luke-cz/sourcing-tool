@@ -7,7 +7,8 @@ export type TierCategory =
   | "top_ai"
   | "top_fintech"
   | "web3"
-  | "strong_startups";
+  | "strong_startups"
+  | "crypto_hft";
 
 export const TIER_CATEGORY_LABELS: Record<TierCategory, string> = {
   faang: "FAANG",
@@ -17,6 +18,7 @@ export const TIER_CATEGORY_LABELS: Record<TierCategory, string> = {
   top_fintech: "Top Fintech",
   web3: "Web3 / Crypto",
   strong_startups: "Strong Startups",
+  crypto_hft: "Crypto HFT / Quant",
 };
 
 // Default tier mapping — can be overridden by user settings
@@ -28,6 +30,7 @@ export const DEFAULT_TIER_MAP: Record<TierCategory, TierLevel> = {
   top_fintech: 2,
   web3: 2,
   strong_startups: 2,
+  crypto_hft: 1,
 };
 
 interface Company {
@@ -242,6 +245,101 @@ const COMPANIES: Company[] = [
   { name: "jupiter exchange", aliases: ["jupiter ag"], category: "web3" },
   { name: "drift protocol", category: "web3" },
   { name: "cow protocol", aliases: ["cowswap"], category: "web3" },
+
+  // ─── CRYPTO HFT / QUANT ───────────────────────────────────────────────────
+  // Market makers
+  { name: "wintermute", displayName: "Wintermute", aliases: ["wintermute trading"], category: "crypto_hft" },
+  { name: "keyrock", displayName: "Keyrock", category: "crypto_hft" },
+  { name: "gsr", displayName: "GSR", aliases: ["gsr markets"], category: "crypto_hft" },
+  { name: "b2c2", displayName: "B2C2", category: "crypto_hft" },
+  { name: "amber group", displayName: "Amber Group", aliases: ["amber"], category: "crypto_hft" },
+  { name: "dwf labs", displayName: "DWF Labs", category: "crypto_hft" },
+  { name: "auros", displayName: "Auros", aliases: ["auros global"], category: "crypto_hft" },
+  { name: "wincent", displayName: "Wincent", category: "crypto_hft" },
+  { name: "kronos research", displayName: "Kronos Research", aliases: ["kronos"], category: "crypto_hft" },
+  { name: "selini capital", displayName: "Selini Capital", category: "crypto_hft" },
+  { name: "gravity team", displayName: "Gravity Team", category: "crypto_hft" },
+  { name: "acheron trading", displayName: "Acheron Trading", aliases: ["acheron"], category: "crypto_hft" },
+  { name: "altonomy", displayName: "Altonomy", category: "crypto_hft" },
+  { name: "folkvang", displayName: "Folkvang", aliases: ["folkvang trading"], category: "crypto_hft" },
+  { name: "qcp capital", displayName: "QCP Capital", aliases: ["qcp"], category: "crypto_hft" },
+  { name: "presto", displayName: "Presto", aliases: ["presto labs", "presto research", "presto trading"], category: "crypto_hft" },
+  { name: "mgnr", displayName: "MGNR", category: "crypto_hft" },
+  { name: "flowdesk", displayName: "Flowdesk", category: "crypto_hft" },
+  { name: "portofino technologies", displayName: "Portofino Technologies", category: "crypto_hft" },
+  { name: "radkl", displayName: "Radkl", category: "crypto_hft" },
+  { name: "bastion trading", displayName: "Bastion Trading", category: "crypto_hft" },
+  { name: "ledgerprime", displayName: "LedgerPrime", aliases: ["ledger prime"], category: "crypto_hft" },
+  { name: "xr trading", displayName: "XR Trading", category: "crypto_hft" },
+  { name: "jump crypto", displayName: "Jump Crypto", category: "crypto_hft" },
+  { name: "cms holdings", displayName: "CMS Holdings", category: "crypto_hft" },
+  { name: "symbolic capital", displayName: "Symbolic Capital Partners", aliases: ["symbolic capital partners"], category: "crypto_hft" },
+  { name: "dexterity capital", displayName: "Dexterity Capital", category: "crypto_hft" },
+  // Prime brokers
+  { name: "falconx", displayName: "FalconX", aliases: ["falcon x"], category: "crypto_hft" },
+  { name: "hidden road", displayName: "Hidden Road", aliases: ["hidden road partners", "ripple prime"], category: "crypto_hft" },
+  { name: "copper.co", displayName: "Copper.co", aliases: ["copper co", "copper technologies"], category: "crypto_hft" },
+  { name: "lmax digital", displayName: "LMAX Digital", aliases: ["lmax"], category: "crypto_hft" },
+  { name: "blockchain.com", displayName: "Blockchain.com", aliases: ["blockchain"], category: "crypto_hft" },
+  // Crypto trading infrastructure
+  { name: "talos", displayName: "Talos", aliases: ["talos trading"], category: "crypto_hft" },
+  { name: "gauntlet", displayName: "Gauntlet", aliases: ["gauntlet networks"], category: "crypto_hft" },
+  { name: "chaos labs", displayName: "Chaos Labs", category: "crypto_hft" },
+  // Quant-heavy crypto investment / trading firms
+  { name: "galaxy digital", displayName: "Galaxy Digital", aliases: ["galaxy trading", "galaxy asset management"], category: "crypto_hft" },
+  { name: "blocktower capital", displayName: "BlockTower Capital", aliases: ["blocktower"], category: "crypto_hft" },
+  { name: "brevan howard digital", displayName: "Brevan Howard Digital", aliases: ["bh digital"], category: "crypto_hft" },
+  { name: "hashkey capital", displayName: "HashKey Capital", aliases: ["hashkey"], category: "crypto_hft" },
+  { name: "genesis trading", displayName: "Genesis Trading", aliases: ["genesis"], category: "crypto_hft" },
+  { name: "matrixport", displayName: "Matrixport", category: "crypto_hft" },
+
+  // ─── CRYPTO HFT / QUANT ───────────────────────────────────────────────────
+  // Market Makers
+  { name: "wintermute", displayName: "Wintermute", aliases: ["wintermute trading"], category: "crypto_hft" },
+  { name: "keyrock", displayName: "Keyrock", category: "crypto_hft" },
+  { name: "gsr", displayName: "GSR", aliases: ["gsr markets"], category: "crypto_hft" },
+  { name: "b2c2", displayName: "B2C2", category: "crypto_hft" },
+  { name: "amber group", displayName: "Amber Group", aliases: ["amber"], category: "crypto_hft" },
+  { name: "dwf labs", displayName: "DWF Labs", category: "crypto_hft" },
+  { name: "cumberland", displayName: "Cumberland", aliases: ["cumberland drw", "cumberland drw llc"], category: "crypto_hft" },
+  { name: "auros", displayName: "Auros", aliases: ["auros global"], category: "crypto_hft" },
+  { name: "wincent", displayName: "Wincent", category: "crypto_hft" },
+  { name: "kronos research", displayName: "Kronos Research", aliases: ["kronos"], category: "crypto_hft" },
+  { name: "selini capital", displayName: "Selini Capital", category: "crypto_hft" },
+  { name: "gravity team", displayName: "Gravity Team", category: "crypto_hft" },
+  { name: "acheron trading", displayName: "Acheron Trading", aliases: ["acheron"], category: "crypto_hft" },
+  { name: "altonomy", displayName: "Altonomy", category: "crypto_hft" },
+  { name: "folkvang", displayName: "Folkvang", aliases: ["folkvang trading"], category: "crypto_hft" },
+  { name: "qcp capital", displayName: "QCP Capital", aliases: ["qcp"], category: "crypto_hft" },
+  { name: "presto labs", displayName: "Presto", aliases: ["presto research", "presto trading"], category: "crypto_hft" },
+  { name: "mgnr", displayName: "MGNR", aliases: ["mgnr.io"], category: "crypto_hft" },
+  { name: "cms holdings", displayName: "CMS Holdings", category: "crypto_hft" },
+  { name: "flowdesk", displayName: "Flowdesk", category: "crypto_hft" },
+  { name: "portofino technologies", displayName: "Portofino Technologies", aliases: ["portofino"], category: "crypto_hft" },
+  { name: "radkl", displayName: "Radkl", category: "crypto_hft" },
+  { name: "bastion trading", displayName: "Bastion Trading", category: "crypto_hft" },
+  { name: "ledgerprime", displayName: "LedgerPrime", aliases: ["ledger prime"], category: "crypto_hft" },
+  { name: "xr trading", displayName: "XR Trading", category: "crypto_hft" },
+  // Prime Brokers
+  { name: "falconx", displayName: "FalconX", aliases: ["falcon x"], category: "crypto_hft" },
+  { name: "hidden road", displayName: "Hidden Road", aliases: ["hidden road partners", "ripple prime"], category: "crypto_hft" },
+  { name: "copper", displayName: "Copper.co", aliases: ["copper co", "copper technologies"], category: "crypto_hft" },
+  { name: "lmax digital", displayName: "LMAX Digital", aliases: ["lmax"], category: "crypto_hft" },
+  { name: "coinbase prime", displayName: "Coinbase Prime", category: "crypto_hft" },
+  // Trading Infrastructure / Tech
+  { name: "talos", displayName: "Talos", aliases: ["talos trading"], category: "crypto_hft" },
+  { name: "paradigm", displayName: "Paradigm", aliases: ["paradigm.co"], category: "crypto_hft" },
+  { name: "gauntlet", displayName: "Gauntlet", aliases: ["gauntlet networks"], category: "crypto_hft" },
+  { name: "chaos labs", displayName: "Chaos Labs", category: "crypto_hft" },
+  { name: "coinroutes", displayName: "CoinRoutes", category: "crypto_hft" },
+  // Crypto Quant Investment / Hedge Funds
+  { name: "galaxy digital", displayName: "Galaxy Digital", aliases: ["galaxy trading", "galaxy asset management"], category: "crypto_hft" },
+  { name: "blocktower capital", displayName: "BlockTower Capital", aliases: ["blocktower"], category: "crypto_hft" },
+  { name: "brevan howard digital", displayName: "Brevan Howard Digital", aliases: ["bh digital"], category: "crypto_hft" },
+  { name: "multicoin capital", displayName: "Multicoin Capital", aliases: ["multicoin"], category: "crypto_hft" },
+  { name: "pantera capital", displayName: "Pantera Capital", aliases: ["pantera"], category: "crypto_hft" },
+  { name: "delphi digital", displayName: "Delphi Digital", aliases: ["delphi ventures"], category: "crypto_hft" },
+  { name: "hashkey capital", displayName: "HashKey Capital", aliases: ["hashkey"], category: "crypto_hft" },
 
   // ─── STRONG STARTUPS ──────────────────────────────────────────────────────
   { name: "databricks", category: "strong_startups" },

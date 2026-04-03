@@ -9,7 +9,8 @@ export type TierCategory =
   | "top_ai"
   | "top_fintech"
   | "web3"
-  | "strong_startups";
+  | "strong_startups"
+  | "crypto_hft";
 
 export interface Repo {
   name: string;

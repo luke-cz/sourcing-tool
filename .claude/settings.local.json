@@ -12,7 +12,8 @@
       "WebFetch(domain:dev.to)",
       "WebFetch(domain:developers.forem.com)",
       "WebFetch(domain:api.stackexchange.com)",
-      "Bash(npx create-next-app@latest . --typescript --tailwind --app --no-src-dir --import-alias \"@/*\" --no-eslint --yes)"
+      "Bash(npx create-next-app@latest . --typescript --tailwind --app --no-src-dir --import-alias \"@/*\" --no-eslint --yes)",
+      "WebSearch"
     ]
   }
 }

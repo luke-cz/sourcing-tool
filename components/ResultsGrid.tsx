@@ -127,112 +127,112 @@ export function ResultsGrid({ response, shortlist, isSaved, onToggleSave, mustHa
         })}
       </div>
 
-      {/* ── Stats + tier pills (results tab only) ── */}
+      {/* ── Single control bar: count + clickable filter pills + sort + view + export ── */}
       {tab === "results" && (
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="text-sm text-slate-500 dark:text-slate-400">
-            <strong className="text-slate-900 dark:text-white">{candidates.length}</strong> candidates
+        <div className="flex flex-wrap items-center gap-2">
+
+          {/* Total count */}
+          <span className="text-sm font-semibold text-slate-900 dark:text-white mr-1">
+            {filtered.length}
+            {filtered.length !== candidates.length && (
+              <span className="text-slate-400 dark:text-slate-500 font-normal"> / {candidates.length}</span>
+            )}
+            <span className="text-slate-500 dark:text-slate-400 font-normal text-xs ml-1">candidates</span>
           </span>
-          <div className="flex flex-wrap gap-1.5">
-            {(Object.entries(countsBySource) as [Source, number][]).map(([src, n]) => (
-              <span key={src} className={`text-xs font-semibold rounded-full px-2.5 py-1 ${SOURCE_COLORS[src]}`}>
-                {SOURCE_LABELS[src]} · {n}
-              </span>
-            ))}
-            {tier1Count > 0 && (
-              <span className="text-xs font-bold rounded-full px-2.5 py-1 bg-gradient-to-r from-amber-400 to-yellow-500 text-amber-900">
-                ✦ {tier1Count} Tier 1
-              </span>
-            )}
-            {tier2Count > 0 && (
-              <span className="text-xs font-semibold rounded-full px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                {tier2Count} Tier 2
-              </span>
-            )}
-          </div>
-        </div>
-      )}
 
-      {/* ── Toolbar: filters + sort + view toggle + export ── */}
-      <div className="flex flex-wrap items-center gap-2">
+          {/* "All" reset pill */}
+          <button
+            onClick={() => { setSourceFilter("all"); setTierFilter("all"); }}
+            className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${
+              sourceFilter === "all" && tierFilter === "all"
+                ? "bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 border-transparent"
+                : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-400"
+            }`}
+          >
+            All
+          </button>
 
-        {/* Source filter */}
-        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
-          {(["all", "github", "linkedin", "stackoverflow"] as const).map((s) => {
-            const label = s === "all" ? "All" : SOURCE_LABELS[s as Source];
-            const active = sourceFilter === s;
+          {/* Source pills — click to filter */}
+          {(Object.entries(countsBySource) as [Source, number][]).map(([src, n]) => {
+            const active = sourceFilter === src;
             return (
-              <button key={s} onClick={() => setSourceFilter(s)}
-                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
-                  active ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700"
+              <button
+                key={src}
+                onClick={() => setSourceFilter(active ? "all" : src)}
+                className={`text-xs font-semibold rounded-full px-2.5 py-1 transition-all border-2 ${
+                  active
+                    ? `${SOURCE_COLORS[src]} border-white/40 scale-105 shadow-md`
+                    : `${SOURCE_COLORS[src]} opacity-50 border-transparent hover:opacity-80`
                 }`}
               >
-                {label}
+                {SOURCE_LABELS[src]} · {n}
               </button>
             );
           })}
-        </div>
 
-        {/* Tier filter */}
-        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
-          {([["all", "All"], ["1", "Tier 1"], ["2", "Tier 2"], ["none", "Untiered"]] as [TierFilter, string][]).map(([v, label]) => (
-            <button key={v} onClick={() => setTierFilter(v)}
-              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
-                tierFilter === v ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700"
+          {/* Tier pills — click to filter */}
+          {tier1Count > 0 && (
+            <button
+              onClick={() => setTierFilter(tierFilter === "1" ? "all" : "1")}
+              className={`text-xs font-bold rounded-full px-2.5 py-1 bg-gradient-to-r from-amber-400 to-yellow-500 text-amber-900 transition-all border-2 ${
+                tierFilter === "1" ? "border-amber-600 scale-105 shadow-md" : "border-transparent opacity-70 hover:opacity-100"
               }`}
             >
-              {label}
+              ✦ {tier1Count} Tier 1
             </button>
-          ))}
-        </div>
-
-        {/* Sort */}
-        <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value as SortKey)}
-          className="text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 outline-none focus:border-blue-400"
-        >
-          <option value="default">Sort: Tier first</option>
-          <option value="followers">Sort: Followers ↓</option>
-        </select>
-
-        {/* Right-side controls */}
-        <div className="flex items-center gap-2 ml-auto">
-          {/* Export */}
-          <button
-            onClick={() => exportCSV(filtered)}
-            title="Export as CSV"
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            Export CSV
-          </button>
-
-          {/* View toggle */}
-          <div className="flex items-center rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+          )}
+          {tier2Count > 0 && (
             <button
-              onClick={() => setView("grid")}
-              title="Grid view"
-              className={`p-1.5 transition-colors ${view === "grid" ? "bg-blue-600 text-white" : "bg-white dark:bg-slate-800 text-slate-400 hover:text-slate-600"}`}
+              onClick={() => setTierFilter(tierFilter === "2" ? "all" : "2")}
+              className={`text-xs font-semibold rounded-full px-2.5 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all border-2 ${
+                tierFilter === "2" ? "border-slate-500 scale-105 shadow-md" : "border-transparent opacity-70 hover:opacity-100"
+              }`}
             >
-              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z" />
-              </svg>
+              {tier2Count} Tier 2
             </button>
+          )}
+
+          {/* Right side: sort + view toggle + export */}
+          <div className="flex items-center gap-2 ml-auto">
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as SortKey)}
+              className="text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 outline-none focus:border-blue-400"
+            >
+              <option value="default">Tier first</option>
+              <option value="followers">Followers ↓</option>
+            </select>
+
             <button
-              onClick={() => setView("list")}
-              title="List view"
-              className={`p-1.5 transition-colors ${view === "list" ? "bg-blue-600 text-white" : "bg-white dark:bg-slate-800 text-slate-400 hover:text-slate-600"}`}
+              onClick={() => exportCSV(filtered)}
+              title="Export visible candidates as CSV"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
+              CSV
             </button>
+
+            <div className="flex items-center rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+              <button onClick={() => setView("grid")} title="Grid view"
+                className={`p-1.5 transition-colors ${view === "grid" ? "bg-blue-600 text-white" : "bg-white dark:bg-slate-800 text-slate-400 hover:text-slate-600"}`}
+              >
+                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z" />
+                </svg>
+              </button>
+              <button onClick={() => setView("list")} title="List view"
+                className={`p-1.5 transition-colors ${view === "list" ? "bg-blue-600 text-white" : "bg-white dark:bg-slate-800 text-slate-400 hover:text-slate-600"}`}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* ── Source errors ── */}
       {errors.length > 0 && (

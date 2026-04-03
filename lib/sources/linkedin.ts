@@ -194,7 +194,7 @@ export async function searchLinkedIn(params: SearchParams): Promise<Candidate[]>
   // Pedigree-only: search by company name boolean clauses (batched, 25 per query)
   // Keyword/skill search removed — it returned too much noise (company pages, job posts, bots)
   const activeCategories = (params.settings?.tierCategories ?? Object.keys({
-    faang: 1, hft_quant: 1, big_tech: 2, top_ai: 1, top_fintech: 2, web3: 2, strong_startups: 2,
+    faang: 1, hft_quant: 1, big_tech: 2, top_ai: 1, top_fintech: 2, web3: 2, strong_startups: 2, crypto_hft: 1,
   })) as TierCategory[];
 
   const companyClauses = buildCompanyClauses(activeCategories);
