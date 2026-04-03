@@ -127,9 +127,38 @@ function isLikelyPerson(r: BraveSearchResult): boolean {
   return true;
 }
 
-function resultToCandidate(r: BraveSearchResult, location?: string): Candidate {
+/**
+ * Try to extract the person's actual location from the Brave snippet.
+ * LinkedIn profiles usually surface location early in the description.
+ */
+function extractLocationFromSnippet(description: string): string | null {
+  if (!description) return null;
+
+  // "City Metropolitan Area" pattern (LinkedIn's own phrasing)
+  const metro = description.match(/\b([A-Z][a-zA-Z\s]+Metropolitan Area)\b/);
+  if (metro) return metro[1].trim();
+
+  // "City, State/Country" with known country names
+  const countryList = "United States|United Kingdom|Canada|Australia|Germany|Netherlands|France|Switzerland|Sweden|Poland|Singapore|Israel|UAE|India|Brazil|Spain|Italy|Japan|South Korea|Norway|Denmark|Finland|Austria|Belgium|Ireland";
+  const country = description.match(
+    new RegExp(`\\b([A-Z][a-zA-Z\\s]+(?:,\\s*[A-Z][a-zA-Z\\s]+)?,\\s*(?:${countryList}))\\b`)
+  );
+  if (country) return country[1].trim();
+
+  // "City, XX" two-letter state code (US/CA style)
+  const stateCode = description.match(/\b([A-Z][a-zA-Z\s]+,\s*[A-Z]{2})\b/);
+  if (stateCode) return stateCode[1].trim();
+
+  return null;
+}
+
+function resultToCandidate(r: BraveSearchResult): Candidate {
   const { name, headline } = parseLinkedInTitle(r.title);
   const username = extractUsername(r.url);
+
+  // Extract actual location from the snippet — do NOT use search location
+  // (the search location is where we searched, not where the person lives)
+  const location = extractLocationFromSnippet(r.description ?? "");
 
   const base: Omit<Candidate, "tier" | "tierCategory"> = {
     id: `linkedin:${username}`,
@@ -140,7 +169,7 @@ function resultToCandidate(r: BraveSearchResult, location?: string): Candidate {
     profileUrl: r.url,
     headline: headline ?? r.description?.split("\n")[0] ?? null,
     bio: r.description ?? null,
-    location: location ?? null,
+    location,
     company: null,
     openToWork: null,
     languages: [],
@@ -158,7 +187,9 @@ export async function searchLinkedIn(params: SearchParams): Promise<Candidate[]>
   if (!apiKey) return [];
 
   const skills = buildSkillKeywords(params.query);
-  const locationSuffix = params.location ? ` ${params.location}` : "";
+  // Quote the location so Brave treats it as a phrase, not individual words
+  // e.g. "New York" not New York (which would match pages mentioning either word)
+  const locationSuffix = params.location ? ` "${params.location}"` : "";
 
   // Pedigree-only: search by company name boolean clauses (batched, 25 per query)
   // Keyword/skill search removed — it returned too much noise (company pages, job posts, bots)
@@ -186,7 +217,7 @@ export async function searchLinkedIn(params: SearchParams): Promise<Candidate[]>
     const username = extractUsername(r.url);
     if (seen.has(username)) continue;
     seen.add(username);
-    all.push(resultToCandidate(r, params.location));
+    all.push(resultToCandidate(r));
   }
 
   return all;

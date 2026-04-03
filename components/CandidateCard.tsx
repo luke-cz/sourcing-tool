@@ -233,8 +233,8 @@ function TierBadge({ tier, category }: { tier: 1 | 2 | null; category: string | 
   if (tier === 1) {
     return (
       <span
-        title="Elite background — top trading firm, FAANG, or leading AI/crypto company"
-        className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 text-amber-900 shadow-sm"
+        title="Company pedigree: Tier 1 — worked at an elite firm (top trading, FAANG, leading AI/crypto). Does NOT indicate role fit — check the AI assessment below."
+        className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 text-amber-900 shadow-sm cursor-help"
       >
         ✦ T1{label ? ` · ${label}` : ""}
       </span>
@@ -243,8 +243,8 @@ function TierBadge({ tier, category }: { tier: 1 | 2 | null; category: string | 
 
   return (
     <span
-      title="Strong background — established tech or well-known startup"
-      className="shrink-0 inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600"
+      title="Company pedigree: Tier 2 — established tech company or well-known startup. Does NOT indicate role fit — check the AI assessment below."
+      className="shrink-0 inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600 cursor-help"
     >
       T2{label ? ` · ${label}` : ""}
     </span>
